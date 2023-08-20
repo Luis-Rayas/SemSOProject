@@ -1,0 +1,69 @@
+<div class="row m-1">
+  <div class="col-3">
+    <div class="card">
+      <div class="card-header">
+        <span class="fw-bold">Lotes Pendientes: 78</span>
+      </div>
+      <div class="card-header">
+        <span>Lote en ejecución: 1</span>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-dark table-sm table-striped rounded">
+          <thead class="text-center align-middle">
+            <tr>
+              <td>ID de Programa</td>
+              <td>Tiempo Maximo Estimado</td>
+            </tr>
+          </thead>
+        </table>
+        <div class="d-flex justify-content-betweend">
+          <ngb-pagination [page]="1" [pageSize]="5" [collectionSize]="11" size="sm"
+            class="d-flex justify-content-center"></ngb-pagination>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-header">
+        <span>Proceso en ejecución</span>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-dark table-sm table-striped rounded">
+          <thead class="text-center align-middle">
+            <tr>
+              <td>ID de Programa</td>
+              <td>Nombre del Programador</td>
+              <td>Operacion a Realizar</td>
+              <td>Tiempo Maximo Estimado</td>
+              <td>Tiempo en ejecucion</td>
+              <td>Tiempo por ejecutar</td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-header">
+        <span>Procesos terminados</span>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-dark table-sm table-striped table-hover rounded">
+          <thead class="text-center align-middle">
+            <tr>
+              <td>ID de Programa</td>
+              <td>Operacion Realizada</td>
+              <td>Datos ingresados</td>
+              <td>Resultado obtenido</td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
