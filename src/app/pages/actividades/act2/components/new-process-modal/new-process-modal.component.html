@@ -1,0 +1,51 @@
+<div class="modal-header">
+  <h4 class="modal-title">Proceso Nuevo</h4>
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="basic-addon1">ID del Proceso</span>
+    </div>
+    <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="basic-addon1">Nombre del Programador</span>
+    </div>
+    <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="basic-addon1">Operación a Realizar</span>
+    </div>
+    <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+  </div>
+
+  <div class="row">
+    <div class="input-group mb-3 col">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">Operador 1</span>
+      </div>
+      <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+    </div>
+    <div class="input-group mb-3 col">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">Operador 2</span>
+      </div>
+      <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="basic-addon1">Tiempo Maximo Estimado</span>
+    </div>
+    <input type="number" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+</div>

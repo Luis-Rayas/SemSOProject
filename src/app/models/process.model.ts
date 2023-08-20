@@ -1,4 +1,4 @@
-import { delay } from "rxjs";
+import { Subject, delay } from "rxjs";
 import { ProcessState } from "./process.state.model";
 
 export class Process {
@@ -13,7 +13,10 @@ export class Process {
   timeExecution !: number;
   timeRemaining !: number;
 
+  processCompleted$ !: Subject<Process>;
+
   private intervalRef !: any;
+
 
   constructor(
     id: number,
@@ -32,6 +35,7 @@ export class Process {
     this.time = time;
     this.timeExecution = 0;
     this.timeRemaining = time;
+    this.processCompleted$ = new Subject<Process>();
   }
 
   private calculateTimeRemaining() : number {
@@ -78,6 +82,9 @@ export class Process {
         this.executeOperation();
         this.state = ProcessState.FINISHED;
         clearInterval(this.intervalRef);
+
+        // Emitir evento processCompleted$ cuando el proceso se complete
+        this.processCompleted$.next(this);
       }
     }, 1000);
   }
@@ -85,6 +92,8 @@ export class Process {
   interruptProcess(state :  ProcessState) : void {
     this.state = state;
     clearInterval(this.intervalRef);
+
+    this.processCompleted$.next(this);
   }
 }
 

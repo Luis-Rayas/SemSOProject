@@ -2,7 +2,7 @@
   <div class="col-3">
     <div class="card">
       <div class="card-header">
-        <span class="fw-bold">Lotes Pendientes: 78</span>
+        <span class="fw-bold">Lotes Pendientes: {{ (batchsCounter$ | async)?.[batchState.PENDING] }}</span>
       </div>
       <div class="card-header">
         <span>Lote en ejecución: 1</span>
@@ -36,9 +36,9 @@
               <td>ID de Programa</td>
               <td>Nombre del Programador</td>
               <td>Operacion a Realizar</td>
-              <td>Tiempo Maximo Estimado</td>
-              <td>Tiempo en ejecucion</td>
-              <td>Tiempo por ejecutar</td>
+              <td>Tpo. Max. Estimado</td>
+              <td>Tpo. ejecucion</td>
+              <td>Tpo. por ejecutar</td>
             </tr>
           </thead>
         </table>
