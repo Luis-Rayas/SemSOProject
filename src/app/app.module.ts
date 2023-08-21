@@ -10,6 +10,8 @@ import { ContainerComponent } from './components/main-layout/container.component
 import { FooterComponent } from './components/footer/footer.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProcessManagerService } from './services/process-manager.service';
+import { EffectsModule } from '@ngrx/effects';
+import { StoreModule } from '@ngrx/store';
 
 @NgModule({
   declarations: [
@@ -22,7 +24,9 @@ import { ProcessManagerService } from './services/process-manager.service';
     BrowserModule,
     AppRoutingModule,
     FontAwesomeModule,
-    NgbModule
+    NgbModule,
+    EffectsModule.forRoot([]),
+    StoreModule.forRoot({}, {})
   ],
   providers: [
     ProcessManagerService

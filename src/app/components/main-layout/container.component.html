@@ -2,19 +2,25 @@
   <div class="col-3">
     <div class="card">
       <div class="card-header">
-        <span class="fw-bold">Lotes Pendientes: {{ (batchsCounter$ | async)?.[batchState.PENDING] }}</span>
+        <span class="fw-bold">Lotes Pendientes: </span>
       </div>
       <div class="card-header">
         <span>Lote en ejecución: 1</span>
       </div>
       <div class="card-body table-responsive p-0">
-        <table class="table table-dark table-sm table-striped rounded">
-          <thead class="text-center align-middle">
+        <table class="table table-sm table-striped table-hover rounded">
+          <thead class="text-center align-middle table-dark">
             <tr>
               <td>ID de Programa</td>
               <td>Tiempo Maximo Estimado</td>
             </tr>
           </thead>
+          <tbody *ngIf="currentBatchRunning$ | async as batch">
+            <tr *ngFor="let process of batch.listProcess">
+              <td>{{ process.id }}</td>
+              <td>{{ process.time }}</td>
+            </tr>
+          </tbody>
         </table>
         <div class="d-flex justify-content-betweend">
           <ngb-pagination [page]="1" [pageSize]="5" [collectionSize]="11" size="sm"
@@ -41,6 +47,16 @@
               <td>Tpo. por ejecutar</td>
             </tr>
           </thead>
+          <tbody *ngIf="currentProcessRunning$ | async as process">
+            <tr>
+              <td>{{ process.id }}</td>
+              <td>{{ process.developer }}</td>
+              <td>{{ process.operation }}</td>
+              <td>{{ process.time }}</td>
+              <td>{{ process.timeExecution }}</td>
+              <td>{{ process.timeRemaining }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

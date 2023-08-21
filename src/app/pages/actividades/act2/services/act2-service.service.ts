@@ -6,9 +6,17 @@ import { ProcessManagerService } from 'src/app/services/process-manager.service'
 export class Act2Service {
 
   constructor(
-    _processManagerService: ProcessManagerService
+    private _processManagerService: ProcessManagerService
   ) { }
 
   addProcess(process: Process) {
+  }
+
+  validateOperators(process : Process) : boolean {
+    return this._processManagerService.isValidProcess(process);
+  }
+
+  validateIdProcess(id : number) : boolean {
+    return this._processManagerService.idValidIdProcess(id);
   }
 }

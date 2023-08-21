@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NewProcessModalComponent } from './components/new-process-modal/new-process-modal.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { Act2RoutingModule } from './act2-routing.module';
 import { Act2Component } from './act2.component';
 import { Act2Service } from './services/act2-service.service';
-import { NewProcessModalComponent } from './components/new-process-modal/new-process-modal.component';
 
 
 @NgModule({
@@ -17,7 +17,9 @@ import { NewProcessModalComponent } from './components/new-process-modal/new-pro
   imports: [
     CommonModule,
     Act2RoutingModule,
-    NgbModule
+    NgbModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   providers: [
     Act2Service

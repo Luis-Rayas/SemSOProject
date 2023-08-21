@@ -18,6 +18,12 @@ export class Act2Component {
 		const modalRef = this._modalService.open(NewProcessModalComponent, {
       size: 'xl'
     });
+    modalRef.result.then((result) => {
+      console.log(result);
+    },
+    (reason) => {
+      console.log(reason);
+    });
 	}
 
 }

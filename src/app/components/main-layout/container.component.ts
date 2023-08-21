@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, from, of, take } from 'rxjs';
+import { Batch } from 'src/app/models/batch.model';
 import { BatchState } from 'src/app/models/batch.state.model';
+import { Process } from 'src/app/models/process.model';
+import { ProcessState } from 'src/app/models/process.state.model';
 import { ProcessManagerService } from 'src/app/services/process-manager.service';
 
 @Component({
@@ -10,17 +13,19 @@ import { ProcessManagerService } from 'src/app/services/process-manager.service'
 })
 export class ContainerComponent implements OnInit {
 
-  batchsCounter$ !: Observable<{ [key: string]: number }>;
+
   batchState = BatchState;
+
+  currentBatchRunning$ !: Observable<Batch | null>;
+  currentProcessRunning$ !: Observable<Process | null>;
 
   constructor(
     private processManagerService: ProcessManagerService
   ) { }
 
   ngOnInit(): void {
-    this.processManagerService.updateBatchCountByState();
-    this.batchsCounter$ = this.processManagerService.batchCountByState$;
+    this.currentBatchRunning$ = this.processManagerService.currentBatchRunning$;
+    this.currentProcessRunning$ = this.processManagerService.currentProcessRunning$;
   }
-
 
 }

@@ -11,16 +11,14 @@ export class Batch {
   state !: BatchState;
   listProcess !: Process[];
 
-  processCompleted$ !: Subject<Process>;
-  batchCompleted$ !: Subject<Batch>;
+  subject$ !: Subject<Batch>;
 
   constructor(id : number) {
     this.id = id;
     this.maxProcess = MAX_PROCESS_IN_BATCH;
     this.state = BatchState.PENDING;
     this.listProcess = [];
-    this.processCompleted$ = new Subject<Process>();
-    this.batchCompleted$ = new Subject<Batch>();
+    this.subject$ = new Subject<Batch>();
   }
 
   startBatch(): void {
@@ -36,7 +34,7 @@ export class Batch {
       nextProcess.startProcess();
 
       // Cuando el proceso se complete, emite el evento processCompleted$
-      nextProcess.processCompleted$
+      nextProcess.subject$
       .pipe(take(1))
       .subscribe(() => {
         this.startNextProcess();
@@ -44,7 +42,8 @@ export class Batch {
     } else {
       // No hay más procesos pendientes
       this.state = BatchState.FINISHED;
-      this.batchCompleted$.next(this);
+      this.subject$.next(this);
+      this.subject$.complete();
     }
   }
 

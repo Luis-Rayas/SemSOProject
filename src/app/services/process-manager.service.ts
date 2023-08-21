@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Process } from '../models/process.model';
 import { Batch } from '../models/batch.model';
-import { BehaviorSubject, Observable, defer, from } from 'rxjs';
+import { BehaviorSubject, Observable, from, of, take } from 'rxjs';
 import { BatchState } from '../models/batch.state.model';
+import { ProcessState } from '../models/process.state.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,90 +11,112 @@ import { BatchState } from '../models/batch.state.model';
 export class ProcessManagerService {
 
   counterGlobal !: number;
-
   batchsId !: number;
-  listBatchsPendients !: Batch[];
 
-  currentBatch !: Batch | null;
-  currentProcess !: Process | null;
 
-  private currentBatchSubject$ !: BehaviorSubject<Batch | null>;
+  private listBatchsPendients !: Batch[];
+  private listBatchsDone !: Batch[];
 
-  batchCountByStateSubject$ !: BehaviorSubject<{ [key: string]: number }>;
-
+  listBatchsPendients$ !: BehaviorSubject<Batch[]>;
+  listBatchsDone$ !: BehaviorSubject<Batch[]>;
 
   constructor() {
     this.counterGlobal = 0;
     this.batchsId = 0;
-    this.currentBatchSubject$ = new BehaviorSubject<Batch | null>(null);
-    // Inicializa el objeto que almacenará el conteo por estado
-    const initialState = {
-      [BatchState.PENDING]: 0,
-      [BatchState.RUNNING]: 0,
-      [BatchState.FINISHED]: 0
-    };
+
+    this.listBatchsPendients = [];
+    this.listBatchsDone = [];
+
+    this.listBatchsPendients$ = new BehaviorSubject<Batch[]>([]);
+    this.listBatchsDone$ = new BehaviorSubject<Batch[]>([]);
   }
 
-  addProcess(process: Process) {
+  idValidIdProcess(id: number): boolean {
+    let isValid = true;
+
+    this.listBatchsPendients.forEach((batch) => {
+      batch.listProcess.forEach((process) => {
+        if (process.id === id) {
+          isValid = false;
+        }
+      });
+    });
+    return true;
+  }
+
+  isValidProcess(process: Process): boolean {
+    if(process.operation === '/' && process.operator2 === 0) {
+      return false;
+    }
+    return true;
+  }
+
+  get currentBatchRunning$(): Observable<Batch | null> {
+    let batch = this.listBatchsPendients.filter((batch) => {
+      return batch.state === BatchState.RUNNING;
+    });
+    if (batch.length > 0) {
+      return from(batch);
+    }
+    else {
+      return of(null);
+    }
+  }
+
+  get currentProcessRunning$(): Observable<Process | null> {
+    let process;
+    this.currentBatchRunning$.pipe(take(1)).subscribe((batch) => {
+      if (batch) {
+        let processList = batch.listProcess.filter((process) => {
+          return process.state === ProcessState.RUNNING;
+        });
+        if (processList.length > 0) {
+          process = processList[0];
+        } else {
+          process = null;
+        }
+      } else {
+        process = null;
+      }
+    });
+    return process ? from(process) : of(null);
+  }
+
+  async startBatch(): Promise<void> {
+    for (const batch of this.listBatchsPendients) {
+      if (batch.state === BatchState.PENDING && !this.isBatchRunning(batch)) {
+        batch.startBatch();
+        await this.waitForBatchCompletion(batch);
+      }
+    }
+  }
+
+  private isBatchRunning(batch: Batch): boolean {
+    // Verifica si el lote está en estado de ejecución
+    return batch.state === BatchState.RUNNING;
+  }
+
+  private async waitForBatchCompletion(batch: Batch): Promise<void> {
+    return new Promise<void>((resolve) => {
+      batch.subject$.subscribe((completedBatch: Batch) => {
+        if (completedBatch === batch) {
+          resolve();
+        }
+      });
+    });
+  }
+
+  addProcess(process: Process): void {
     // Si el ultimo batch esta libre, lo añadimos ahi, si no, se añade uno nuevo o no hay batch  creados.
-    let batch;
-    if (this.listBatchsPendients.length == 0 || this.listBatchsPendients[this.listBatchsPendients.length - 1].canAddProcess() == false) {
+    let batch = null;
+    if (this.listBatchsPendients.length == 0 || !this.listBatchsPendients[this.listBatchsPendients.length - 1].canAddProcess()) {
       batch = new Batch(++this.batchsId);
       this.listBatchsPendients.push(batch);
     } else {
       batch = this.listBatchsPendients[this.listBatchsPendients.length - 1];
     }
-
     batch.addProcess(process);
-    this.updateBatchCountByState();
-  }
-
-  startBatchsSequentially(): Observable<void> {
-    return defer(() => {
-      return this.startNextBatch();
-    });
-  }
-
-  private startNextBatch(): Observable<void> {
-    if (this.listBatchsPendients.length === 0) {
-      // No hay lotes pendientes
-      return from(Promise.resolve()); // Completa inmediatamente
-    }
-
-    const nextBatch = this.listBatchsPendients.shift();
-    if (!nextBatch) {
-      // Lote nulo, no debería ocurrir
-      return from(Promise.resolve());
-    }
-
-    this.updateBatchCountByState();
-
-    return new Observable<void>((observer) => {
-      this.currentBatchSubject$.next(nextBatch); // Establece el lote actual
-      nextBatch.batchCompleted$.subscribe(() => {
-        // Cuando el lote termine, inicia el siguiente
-        this.startNextBatch().subscribe(() => {
-          observer.complete(); // Completa cuando el siguiente lote haya terminado
-        });
-      });
-      nextBatch.startBatch();
-    });
-  }
-
-  get batchCountByState$(): Observable<{ [key: string]: number }> {
-    return this.batchCountByStateSubject$.asObservable();
-  }
-
-  updateBatchCountByState(): void {
-    const batchCountByState: { [key: string]: number } = {};
-
-    // Calcula la cantidad de lotes por estado
-    batchCountByState[BatchState.PENDING] = this.listBatchsPendients.filter((batch) => batch.state === BatchState.PENDING).length;
-    batchCountByState[BatchState.RUNNING] = this.listBatchsPendients.filter((batch) => batch.state === BatchState.RUNNING).length;
-    batchCountByState[BatchState.FINISHED] = this.listBatchsPendients.filter((batch) => batch.state === BatchState.FINISHED).length;
-
-    // Actualiza el BehaviorSubject con el nuevo objeto de conteo por estado
-    this.batchCountByStateSubject$.next(batchCountByState);
+    this.listBatchsPendients$.next(this.listBatchsPendients);
   }
 
   resetCouterBatchId() {

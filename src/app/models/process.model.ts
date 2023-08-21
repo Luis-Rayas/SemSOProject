@@ -13,7 +13,7 @@ export class Process {
   timeExecution !: number;
   timeRemaining !: number;
 
-  processCompleted$ !: Subject<Process>;
+  subject$ !: Subject<Process>;
 
   private intervalRef !: any;
 
@@ -35,7 +35,8 @@ export class Process {
     this.time = time;
     this.timeExecution = 0;
     this.timeRemaining = time;
-    this.processCompleted$ = new Subject<Process>();
+
+    this.subject$ = new Subject<Process>();
   }
 
   private calculateTimeRemaining() : number {
@@ -83,8 +84,8 @@ export class Process {
         this.state = ProcessState.FINISHED;
         clearInterval(this.intervalRef);
 
-        // Emitir evento processCompleted$ cuando el proceso se complete
-        this.processCompleted$.next(this);
+        this.subject$.next(this);
+        this.subject$.complete();
       }
     }, 1000);
   }
@@ -93,7 +94,7 @@ export class Process {
     this.state = state;
     clearInterval(this.intervalRef);
 
-    this.processCompleted$.next(this);
+    this.subject$.next(this);
   }
 }
 
