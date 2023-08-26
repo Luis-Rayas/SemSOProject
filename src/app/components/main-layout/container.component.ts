@@ -19,13 +19,22 @@ export class ContainerComponent implements OnInit {
   currentBatchRunning$ !: Observable<Batch | null>;
   currentProcessRunning$ !: Observable<Process | null>;
 
+  batchPendingsCount$ !: Observable<number>;
+
+  processPendigsOfCurrentBatch$ !: Observable<Process[]>
+
+  processFinished$ !: Observable<Process[]>
+
   constructor(
     private processManagerService: ProcessManagerService
   ) { }
 
   ngOnInit(): void {
-    this.currentBatchRunning$ = this.processManagerService.currentBatchRunning$;
-    this.currentProcessRunning$ = this.processManagerService.currentProcessRunning$;
+    this.currentBatchRunning$ = this.processManagerService.currentBatch$;
+    this.currentProcessRunning$ = this.processManagerService.currentProcess$;
+    this.batchPendingsCount$ = this.processManagerService.numberOfBatchPendigs;
+    this.processPendigsOfCurrentBatch$ = this.processManagerService.processPendientsOfCurrentBatch$;
+    this.processFinished$ = this.processManagerService.processFinished$;
   }
 
 }

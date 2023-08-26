@@ -64,7 +64,12 @@ export class Process {
         }
         return this.result;
       case '%':
-        this.result = this.operator1 % this.operator2;
+        try {
+          this.result = this.operator1 % this.operator2;
+        } catch (error) {
+          console.error(error);
+          this.result = 0;
+        }
         return this.result;
       case '%%':
         this.result = (this.operator2 * 100) / this.operator1;

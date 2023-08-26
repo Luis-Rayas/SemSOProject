@@ -9,7 +9,12 @@ export class Act2Service {
     private _processManagerService: ProcessManagerService
   ) { }
 
+  startBatchs() {
+    this._processManagerService.startBatchs();
+  }
+
   addProcess(process: Process) {
+    this._processManagerService.addProcess(process);
   }
 
   validateOperators(process : Process) : boolean {

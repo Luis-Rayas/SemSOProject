@@ -10,32 +10,112 @@ import { ProcessState } from '../models/process.state.model';
 })
 export class ProcessManagerService {
 
+  setIntervalRef !: any;
   counterGlobal !: number;
   batchsId !: number;
 
 
-  private listBatchsPendients !: Batch[];
-  private listBatchsDone !: Batch[];
-
-  listBatchsPendients$ !: BehaviorSubject<Batch[]>;
-  listBatchsDone$ !: BehaviorSubject<Batch[]>;
+  listBatchsPendients !: Batch[];
+  currentBatch !: Batch | null;
+  private indexBatch !: number;
 
   constructor() {
     this.counterGlobal = 0;
     this.batchsId = 0;
 
     this.listBatchsPendients = [];
-    this.listBatchsDone = [];
-
-    this.listBatchsPendients$ = new BehaviorSubject<Batch[]>([]);
-    this.listBatchsDone$ = new BehaviorSubject<Batch[]>([]);
+    this.currentBatch = null;
+    this.indexBatch = 0;
   }
 
+  startBatchs(): void {
+    if(this.currentBatch && (this.currentBatch.state === BatchState.PENDING || this.currentBatch.state == BatchState.PAUSED)) {
+      this.currentBatch.state = BatchState.RUNNING;
+      this.currentBatch.startBatch();
+    }
+    this.startNextBatch();
+    this.setIntervalRef = setInterval(() => {
+      this.counterGlobal++;
+    }, 1000);
+  }
+
+  private startNextBatch(): void {
+    const pendingBatches = this.listBatchsPendients.filter((batch) => {
+      return batch.state === BatchState.PENDING;
+    });
+
+    if(pendingBatches.length > 0) {
+      this.currentBatch = this.listBatchsPendients[this.indexBatch];
+      this.currentBatch.state = BatchState.RUNNING;
+      this.currentBatch.startBatch();
+
+      this.currentBatch?.subject$.subscribe((batch) => {
+        console.log(batch);
+        this.indexBatch++;
+        this.currentBatch = null;
+        this.startNextBatch();
+      });
+    } else {
+      this.currentBatch = null;
+      clearInterval(this.setIntervalRef);
+    }
+  }
+
+  interruptBatch(state: ProcessState): void {
+    if(this.currentBatch) {
+      this.currentBatch.interruptBatch(state);
+    }
+  }
+
+  getCountFilteringByBatchState(state: BatchState): number {
+    return this.listBatchsPendients.filter((batch) => {
+      return batch.state === state;
+    }).length;
+  }
+
+  get currentBatch$(): Observable<Batch | null> {
+    return this.currentBatch ? of(this.currentBatch) : of(null);
+  }
+
+  get currentProcess$(): Observable<Process | null> {
+    return this.currentBatch ? of(this.currentBatch.currentProcess) : of(null);
+  }
+
+  get processPendientsOfCurrentBatch$(): Observable<Process[]> {
+    if(this.currentBatch) {
+      return of(this.currentBatch.listProcess.filter((process) => {
+        return process.state === ProcessState.PENDING;
+      }));
+    }
+    return of([]);
+  }
+
+  get numberOfBatchPendigs(): Observable<number> {
+    const pendingBatches = this.listBatchsPendients.filter((batch) => {
+      return batch.state === BatchState.PENDING;
+    }).length;
+
+    return of(pendingBatches);
+  }
+
+  get processFinished$(): Observable<Process[]> {
+    const finishedProcesses : Process[] = [];
+    this.listBatchsPendients.forEach((batch) => {
+      batch.listProcess.forEach((process) => {
+        if(process.state === ProcessState.FINISHED) {
+          finishedProcesses.push(process);
+        }
+      });
+    });
+
+    return of(finishedProcesses);
+  }
   idValidIdProcess(id: number): boolean {
     let isValid = true;
 
     this.listBatchsPendients.forEach((batch) => {
       batch.listProcess.forEach((process) => {
+        console.log(process);
         if (process.id === id) {
           isValid = false;
         }
@@ -45,65 +125,10 @@ export class ProcessManagerService {
   }
 
   isValidProcess(process: Process): boolean {
-    if(process.operation === '/' && process.operator2 === 0) {
+    if((process.operation === '/' || process.operation === '%') && process.operator2 === 0) {
       return false;
     }
     return true;
-  }
-
-  get currentBatchRunning$(): Observable<Batch | null> {
-    let batch = this.listBatchsPendients.filter((batch) => {
-      return batch.state === BatchState.RUNNING;
-    });
-    if (batch.length > 0) {
-      return from(batch);
-    }
-    else {
-      return of(null);
-    }
-  }
-
-  get currentProcessRunning$(): Observable<Process | null> {
-    let process;
-    this.currentBatchRunning$.pipe(take(1)).subscribe((batch) => {
-      if (batch) {
-        let processList = batch.listProcess.filter((process) => {
-          return process.state === ProcessState.RUNNING;
-        });
-        if (processList.length > 0) {
-          process = processList[0];
-        } else {
-          process = null;
-        }
-      } else {
-        process = null;
-      }
-    });
-    return process ? from(process) : of(null);
-  }
-
-  async startBatch(): Promise<void> {
-    for (const batch of this.listBatchsPendients) {
-      if (batch.state === BatchState.PENDING && !this.isBatchRunning(batch)) {
-        batch.startBatch();
-        await this.waitForBatchCompletion(batch);
-      }
-    }
-  }
-
-  private isBatchRunning(batch: Batch): boolean {
-    // Verifica si el lote está en estado de ejecución
-    return batch.state === BatchState.RUNNING;
-  }
-
-  private async waitForBatchCompletion(batch: Batch): Promise<void> {
-    return new Promise<void>((resolve) => {
-      batch.subject$.subscribe((completedBatch: Batch) => {
-        if (completedBatch === batch) {
-          resolve();
-        }
-      });
-    });
   }
 
   addProcess(process: Process): void {
@@ -116,10 +141,10 @@ export class ProcessManagerService {
       batch = this.listBatchsPendients[this.listBatchsPendients.length - 1];
     }
     batch.addProcess(process);
-    this.listBatchsPendients$.next(this.listBatchsPendients);
   }
 
-  resetCouterBatchId() {
+  reset() : void{
     this.batchsId = 0;
+    this.counterGlobal = 0;
   }
 }

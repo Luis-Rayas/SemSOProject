@@ -2,10 +2,10 @@
   <div class="col-3">
     <div class="card">
       <div class="card-header">
-        <span class="fw-bold">Lotes Pendientes: </span>
+        <span class="fw-bold">Lotes Pendientes: {{ batchPendingsCount$ | async }}</span>
       </div>
       <div class="card-header">
-        <span>Lote en ejecución: 1</span>
+        <span>Lote en ejecución:</span>
       </div>
       <div class="card-body table-responsive p-0">
         <table class="table table-sm table-striped table-hover rounded">
@@ -22,10 +22,10 @@
             </tr>
           </tbody>
         </table>
-        <div class="d-flex justify-content-betweend">
+        <!-- <div class="d-flex justify-content-betweend">
           <ngb-pagination [page]="1" [pageSize]="5" [collectionSize]="11" size="sm"
             class="d-flex justify-content-center"></ngb-pagination>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -77,6 +77,14 @@
               <td>Resultado obtenido</td>
             </tr>
           </thead>
+          <tbody *ngIf="processFinished$ | async as process">
+            <tr *ngFor="let processFinished of process">
+              <td>{{ processFinished.id }}</td>
+              <td>{{ processFinished.operation }}</td>
+              <td>{{ processFinished.operator1 }} | {{ processFinished.operator2 }}</td>
+              <td>{{ processFinished.result }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

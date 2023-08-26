@@ -10,6 +10,8 @@ export class Batch {
   maxProcess !: number;
   state !: BatchState;
   listProcess !: Process[];
+  indexProcessActual !: number;
+  currentProcess !: Process | null;
 
   subject$ !: Subject<Batch>;
 
@@ -18,11 +20,18 @@ export class Batch {
     this.maxProcess = MAX_PROCESS_IN_BATCH;
     this.state = BatchState.PENDING;
     this.listProcess = [];
+    this.indexProcessActual = 0;
+    this.currentProcess = null;
+
     this.subject$ = new Subject<Batch>();
   }
 
   startBatch(): void {
     this.state = BatchState.RUNNING;
+    if(this.currentProcess && (this.currentProcess.state === ProcessState.PENDING || this.currentProcess.state == ProcessState.PAUSED)) {
+      this.currentProcess.state = ProcessState.RUNNING;
+      this.currentProcess.startProcess();
+    }
     this.startNextProcess();
   }
 
@@ -30,21 +39,28 @@ export class Batch {
     const pendingProcesses = this.filterProcessByState(ProcessState.PENDING);
 
     if (pendingProcesses.length > 0) {
-      const nextProcess = pendingProcesses[0];
-      nextProcess.startProcess();
+      this.currentProcess = this.listProcess[this.indexProcessActual];
+      this.currentProcess.state = ProcessState.RUNNING;
+      this.currentProcess.startProcess();
 
-      // Cuando el proceso se complete, emite el evento processCompleted$
-      nextProcess.subject$
-      .pipe(take(1))
-      .subscribe(() => {
+      this.currentProcess.subject$.subscribe((process) => {
+        console.log(process);
+        this.indexProcessActual++;
+        this.currentProcess = null;
         this.startNextProcess();
-      });
+      })
+
     } else {
       // No hay más procesos pendientes
       this.state = BatchState.FINISHED;
       this.subject$.next(this);
       this.subject$.complete();
     }
+  }
+
+  interruptBatch(processState : ProcessState) : void {
+    this.state = BatchState.PAUSED;
+    this.currentProcess?.interruptProcess(processState);
   }
 
   filterProcessByState(state : ProcessState) : Process[] {
