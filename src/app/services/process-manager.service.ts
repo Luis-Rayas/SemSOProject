@@ -19,6 +19,23 @@ export class ProcessManagerService {
   currentBatch !: Batch | null;
   private indexBatch !: number;
 
+  //TESTING
+  private currentBatchSubject = new BehaviorSubject<Batch | null>(null);
+  currentBatch$: Observable<Batch | null> = this.currentBatchSubject.asObservable();
+
+  private currentProcessSubject = new BehaviorSubject<Process | null>(null);
+  currentProcess$: Observable<Process | null> = this.currentProcessSubject.asObservable();
+
+  private processPendientsOfCurrentBatchSubject = new BehaviorSubject<Process[]>([]);
+  processPendientsOfCurrentBatch$: Observable<Process[]> = this.processPendientsOfCurrentBatchSubject.asObservable();
+
+  private numberOfBatchPendingsSubject = new BehaviorSubject<number>(0);
+  numberOfBatchPendings$: Observable<number> = this.numberOfBatchPendingsSubject.asObservable();
+
+  private processFinishedSubject = new BehaviorSubject<Process[]>([]);
+  processFinished$: Observable<Process[]> = this.processFinishedSubject.asObservable();
+
+
   constructor() {
     this.counterGlobal = 0;
     this.batchsId = 0;
@@ -49,10 +66,10 @@ export class ProcessManagerService {
       this.currentBatch.state = BatchState.RUNNING;
       this.currentBatch.startBatch();
 
-      this.currentBatch?.subject$.subscribe((batch) => {
-        console.log(batch);
+      this.currentBatch?.subject.subscribe((batch) => {
         this.indexBatch++;
         this.currentBatch = null;
+        this.updateProcessData();
         this.startNextBatch();
       });
     } else {
@@ -73,7 +90,49 @@ export class ProcessManagerService {
     }).length;
   }
 
-  get currentBatch$(): Observable<Batch | null> {
+  setCurrentBatch(batch: Batch | null): void {
+    this.currentBatchSubject.next(batch);
+  }
+
+  setCurrentProcess(process: Process | null): void {
+    this.currentProcessSubject.next(process);
+  }
+
+  setProcessPendientsOfCurrentBatch(processes: Process[]): void {
+    this.processPendientsOfCurrentBatchSubject.next(processes);
+  }
+
+  setNumberOfBatchPendings(count: number): void {
+    this.numberOfBatchPendingsSubject.next(count);
+  }
+
+  setProcessFinished(processes: Process[]): void {
+    this.processFinishedSubject.next(processes);
+  }
+
+  private updateProcessData(): void {
+    // Actualiza y notifica todos los valores relacionados con los procesos.
+    this.setCurrentBatch(this.currentBatch); // Actualiza currentBatch
+    this.currentBatch ? this.setCurrentProcess(this.currentBatch.currentProcess) : this.setCurrentProcess(null); // Actualiza currentProcess
+    this.setProcessPendientsOfCurrentBatch(
+      this.currentBatch?.listProcess.filter(process => process.state === ProcessState.PENDING) || []
+    ); // Actualiza processPendientsOfCurrentBatch
+    this.setNumberOfBatchPendings(
+      this.listBatchsPendients.filter(batch => batch.state === BatchState.PENDING).length
+    ); // Actualiza numberOfBatchPendings
+
+    const finishedProcesses: Process[] = [];
+    this.listBatchsPendients.forEach(batch => {
+      batch.listProcess.forEach(process => {
+        if (process.state === ProcessState.FINISHED) {
+          finishedProcesses.push(process);
+        }
+      });
+    });
+    this.setProcessFinished(finishedProcesses); // Actualiza processFinished
+  }
+
+  /*get currentBatch$(): Observable<Batch | null> {
     return this.currentBatch ? of(this.currentBatch) : of(null);
   }
 
@@ -110,6 +169,8 @@ export class ProcessManagerService {
 
     return of(finishedProcesses);
   }
+  */
+
   idValidIdProcess(id: number): boolean {
     let isValid = true;
 
@@ -141,6 +202,7 @@ export class ProcessManagerService {
       batch = this.listBatchsPendients[this.listBatchsPendients.length - 1];
     }
     batch.addProcess(process);
+    this.updateProcessData();
   }
 
   reset() : void{

@@ -1,4 +1,4 @@
-import { Subject, delay } from "rxjs";
+import { BehaviorSubject, Observable, Subject, delay } from "rxjs";
 import { ProcessState } from "./process.state.model";
 
 export class Process {
@@ -11,12 +11,17 @@ export class Process {
   result !: number;
   time !: number;
   timeExecution !: number;
-  timeRemaining !: number;
+  timeExecution$ !: Observable<number>;
+  timeExecutionSubject !: BehaviorSubject<number>;
 
-  subject$ !: Subject<Process>;
+  timeRemaining !: number;
+  timeRemainingSubject !: BehaviorSubject<number>;
+  timeRemaining$ !: Observable<number>;
+
+  subject !: Subject<Process>;
+  observable !: Observable<Process>;
 
   private intervalRef !: any;
-
 
   constructor(
     id: number,
@@ -33,14 +38,26 @@ export class Process {
     this.operator1 = operator1;
     this.operator2 = operator2;
     this.time = time;
-    this.timeExecution = 0;
-    this.timeRemaining = time;
 
-    this.subject$ = new Subject<Process>();
-  }
+    this.timeExecution = 0;
+    this.timeExecutionSubject = new BehaviorSubject<number>(0);
+    this.timeExecution$ = this.timeExecutionSubject.asObservable();
+
+    this.timeRemaining = time;
+    this.timeRemainingSubject = new BehaviorSubject<number>(time);
+    this.timeRemaining$ = this.timeRemainingSubject.asObservable();
+
+    this.subject = new Subject<Process>();
+    this.observable = this.subject.asObservable();
+    }
+
 
   private calculateTimeRemaining() : number {
     this.timeRemaining = this.time - this.timeExecution;
+
+    this.timeRemainingSubject.next(this.timeRemaining);
+    this.timeExecutionSubject.next(this.timeExecution);
+
     return this.timeRemaining;
   }
 
@@ -89,8 +106,13 @@ export class Process {
         this.state = ProcessState.FINISHED;
         clearInterval(this.intervalRef);
 
-        this.subject$.next(this);
-        this.subject$.complete();
+        this.subject.next(this);
+        this.timeRemainingSubject.next(this.timeRemaining);
+        this.timeExecutionSubject.next(this.timeExecution);
+
+        this.subject.complete();
+        this.timeRemainingSubject.complete();
+        this.timeExecutionSubject.complete();
       }
     }, 1000);
   }
@@ -99,7 +121,7 @@ export class Process {
     this.state = state;
     clearInterval(this.intervalRef);
 
-    this.subject$.next(this);
+    this.subject.next(this);
   }
 }
 

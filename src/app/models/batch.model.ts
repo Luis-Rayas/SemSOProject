@@ -1,4 +1,4 @@
-import { Subject, pipe, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, pipe, take } from 'rxjs';
 import { BatchState } from './batch.state.model';
 import { Process } from './process.model';
 import { ProcessState } from './process.state.model';
@@ -13,7 +13,11 @@ export class Batch {
   indexProcessActual !: number;
   currentProcess !: Process | null;
 
-  subject$ !: Subject<Batch>;
+  currentProcessSubject !: BehaviorSubject<Process | null>;
+  currentProcess$ !: Observable<Process | null>;
+
+  subject !: Subject<Batch>;
+  observable !: Observable<Batch>;
 
   constructor(id : number) {
     this.id = id;
@@ -23,7 +27,10 @@ export class Batch {
     this.indexProcessActual = 0;
     this.currentProcess = null;
 
-    this.subject$ = new Subject<Batch>();
+    this.currentProcessSubject = new BehaviorSubject<Process | null>(null);
+
+    this.subject = new Subject<Batch>();
+    this.observable = this.subject.asObservable();
   }
 
   startBatch(): void {
@@ -42,9 +49,9 @@ export class Batch {
       this.currentProcess = this.listProcess[this.indexProcessActual];
       this.currentProcess.state = ProcessState.RUNNING;
       this.currentProcess.startProcess();
+      this.currentProcessSubject.next(this.currentProcess);
 
-      this.currentProcess.subject$.subscribe((process) => {
-        console.log(process);
+      this.currentProcess.subject.subscribe((process) => {
         this.indexProcessActual++;
         this.currentProcess = null;
         this.startNextProcess();
@@ -53,8 +60,8 @@ export class Batch {
     } else {
       // No hay más procesos pendientes
       this.state = BatchState.FINISHED;
-      this.subject$.next(this);
-      this.subject$.complete();
+      this.subject.next(this);
+      this.subject.complete();
     }
   }
 
