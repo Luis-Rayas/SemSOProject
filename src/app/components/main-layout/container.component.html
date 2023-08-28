@@ -8,15 +8,15 @@
         <span>Lote en ejecución:</span>
       </div>
       <div class="card-body table-responsive p-0">
-        <table class="table table-sm table-striped table-hover rounded">
-          <thead class="text-center align-middle table-dark">
+        <table class="table table-sm table-striped table-hover rounded text-center">
+          <thead class="align-middle table-dark">
             <tr>
               <td>ID de Programa</td>
               <td>Tiempo Maximo Estimado</td>
             </tr>
           </thead>
-          <tbody *ngIf="currentBatchRunning$ | async as batch">
-            <tr *ngFor="let process of batch.listProcess">
+          <tbody *ngIf="processPendigsOfCurrentBatch$ | async as processes" >
+            <tr *ngFor="let process of processes">
               <td>{{ process.id }}</td>
               <td>{{ process.time }}</td>
             </tr>
@@ -36,8 +36,8 @@
         <span>Proceso en ejecución</span>
       </div>
       <div class="card-body table-responsive p-0">
-        <table class="table table-dark table-sm table-striped rounded">
-          <thead class="text-center align-middle">
+        <table class="table table-dark table-sm table-striped rounded text-center ">
+          <thead class="align-middle">
             <tr>
               <td>ID de Programa</td>
               <td>Nombre del Programador</td>
@@ -53,11 +53,17 @@
               <td>{{ process.developer }}</td>
               <td>{{ process.operation }}</td>
               <td>{{ process.time }}</td>
-              <td>{{ process.timeExecution }}</td>
-              <td>{{ process.timeRemaining }}</td>
+              <td *ngIf="process.timeExecution$ | async as timeExecution">{{ timeExecution }}</td>
+              <td *ngIf="process.timeRemaining$ | async as timeRemaining">{{ timeRemaining }}</td>
             </tr>
           </tbody>
         </table>
+
+      </div>
+      <div class="card-footer" *ngIf="currentProcessRunning$ | async as process">
+        <progressbar type="success" [value]="(process.timeExecution$ |async) ? process.timeExecution : 0" [max]="process.time"[striped]="true" [animate]="true">
+          <i>{{ (process.timeExecution$ | async) }} / {{ process.time }}</i>
+        </progressbar>
       </div>
     </div>
   </div>
@@ -75,19 +81,30 @@
               <td>Operacion Realizada</td>
               <td>Datos ingresados</td>
               <td>Resultado obtenido</td>
+              <td>ID Lote</td>
             </tr>
           </thead>
-          <tbody *ngIf="processFinished$ | async as process">
-            <tr *ngFor="let processFinished of process">
+          <tbody *ngIf="processFinished$ | async as processes">
+            <tr *ngFor="let processFinished of processes" class="text-center">
               <td>{{ processFinished.id }}</td>
               <td>{{ processFinished.operation }}</td>
               <td>{{ processFinished.operator1 }} | {{ processFinished.operator2 }}</td>
-              <td>{{ processFinished.result }}</td>
+              <td class="text-right">{{ processFinished.result }}</td>
+              <td>{{ processFinished.batchId }}</td>
             </tr>
           </tbody>
+          <tfoot class="table-light">
+            <tr class="text-center">
+              <td><fa-icon icon="info"></fa-icon></td>
+              <td colspan="2">'%' => MODULO</td>
+              <td colspan="2">'%%' => PORCENTAJE</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
   </div>
-
+</div>
+<div class="position-absolute bottom-0 start-0 rounded-circle m-5">
+    <span class="btn btn-secondary">Contador Global: {{ counterGlobal$ | async }}</span>
 </div>

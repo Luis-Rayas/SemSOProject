@@ -25,6 +25,8 @@ export class ContainerComponent implements OnInit {
 
   processFinished$ !: Observable<Process[]>
 
+  counterGlobal$ !: Observable<number>;
+
   constructor(
     private processManagerService: ProcessManagerService
   ) { }
@@ -35,6 +37,7 @@ export class ContainerComponent implements OnInit {
     this.batchPendingsCount$ = this.processManagerService.numberOfBatchPendings$;
     this.processPendigsOfCurrentBatch$ = this.processManagerService.processPendientsOfCurrentBatch$;
     this.processFinished$ = this.processManagerService.processFinished$;
+    this.counterGlobal$ = this.processManagerService.counterGlobal$;
   }
 
 }

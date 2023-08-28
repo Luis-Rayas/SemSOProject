@@ -4,6 +4,7 @@ import { ProcessState } from "./process.state.model";
 export class Process {
   id !: number;
   state !: ProcessState;
+  batchId !: number;
   developer !: string;
   operation !: string;
   operator1 !: number;
@@ -33,6 +34,7 @@ export class Process {
   ) {
     this.id = id;
     this.state = ProcessState.PENDING;
+    this.batchId = 0;
     this.developer = developer;
     this.operation = operation;
     this.operator1 = operator1;
@@ -44,7 +46,7 @@ export class Process {
     this.timeExecution$ = this.timeExecutionSubject.asObservable();
 
     this.timeRemaining = time;
-    this.timeRemainingSubject = new BehaviorSubject<number>(time);
+    this.timeRemainingSubject = new BehaviorSubject<number>(this.timeRemaining);
     this.timeRemaining$ = this.timeRemainingSubject.asObservable();
 
     this.subject = new Subject<Process>();

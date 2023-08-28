@@ -22,7 +22,7 @@ import { Act2Service } from './services/act2-service.service';
     ReactiveFormsModule
   ],
   providers: [
-    Act2Service
+    Act2Service,
   ]
 })
 export class Act2Module { }

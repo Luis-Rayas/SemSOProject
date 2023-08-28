@@ -1,10 +1,13 @@
 
 <div class="dropup position-absolute bottom-0 end-0 rounded-circle m-5">
-  <button type="button" class="btn btn-success btn-lg dropdown-toggle hide-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+  <button type="button" class="btn btn-success btn-lg rounded-circle dropdown-toggle hide-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
     <i class="fa-solid fa-plus"></i>
     <span class="visually-hidden">Add Category</span>
   </button>
   <ul class="dropdown-menu">
+    <li>
+      <button class="dropdown-item text-danger" (click)="reset()">Reiniciar?</button>
+    </li>
     <li>
       <button class="dropdown-item" (click)="startBatchs()">Iniciar Procesamiento</button>
     </li>

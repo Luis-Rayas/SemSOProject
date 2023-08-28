@@ -24,4 +24,8 @@ export class Act2Service {
   validateIdProcess(id : number) : boolean {
     return this._processManagerService.idValidIdProcess(id);
   }
+
+  reset() {
+    this._processManagerService.reset();
+  }
 }

@@ -7,7 +7,7 @@ import { Process } from 'src/app/models/process.model';
 @Component({
   selector: 'app-act2',
   templateUrl: './act2.component.html',
-  styleUrls: ['./act2.component.css']
+  styleUrls: ['./act2.component.css'],
 })
 export class Act2Component {
 	constructor(
@@ -40,4 +40,7 @@ export class Act2Component {
     });
 	}
 
+  reset() : void{
+    confirm('¿Deseas resetear toda la informacion y el contador?') ? this._act2Service.reset() : null;
+  }
 }

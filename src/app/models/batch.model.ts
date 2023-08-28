@@ -71,9 +71,10 @@ export class Batch {
   }
 
   filterProcessByState(state : ProcessState) : Process[] {
-    return this.listProcess.filter((process) => {
+    let process = this.listProcess.filter((process) => {
       return process.state === state;
     });
+    return process;
   }
 
   canAddProcess() : boolean {
@@ -82,6 +83,7 @@ export class Batch {
 
   addProcess(process: Process) : void {
     if(this.canAddProcess()) {
+      process.batchId = this.id;
       this.listProcess.push(process);
     }
   }

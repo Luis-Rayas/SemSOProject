@@ -24,7 +24,7 @@ export class NewProcessModalComponent implements OnInit {
       operation: new FormControl(null, [Validators.required]),
       operator1: new FormControl(null, [Validators.required]),
       operator2: new FormControl(null, [Validators.required]),
-      time: new FormControl(null, [Validators.required, Validators.min(1)])
+      time: new FormControl(null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]+$")])
     },
       this.validateOperators()
     )
@@ -55,7 +55,8 @@ export class NewProcessModalComponent implements OnInit {
   validateIdProcess(): ValidatorFn {
     return (control : AbstractControl): ValidationErrors | null => {
       const id = control.value;
-      return this.act2Service.validateIdProcess(id) ? null : { invalidId: true };
+      const valid = this.act2Service.validateIdProcess(id);
+      return valid ? null : { invalidId: true };
     }
   }
 }

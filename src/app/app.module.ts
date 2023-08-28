@@ -9,6 +9,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { ContainerComponent } from './components/main-layout/container.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { ProcessManagerService } from './services/process-manager.service';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
@@ -25,6 +26,7 @@ import { StoreModule } from '@ngrx/store';
     AppRoutingModule,
     FontAwesomeModule,
     NgbModule,
+    ProgressbarModule.forRoot(),
     EffectsModule.forRoot([]),
     StoreModule.forRoot({}, {})
   ],

@@ -4,7 +4,7 @@
 </div>
 <div class="modal-body">
   <div class="alert alert-danger" *ngIf="formProcess.hasError('invalidOperator')">No puede hacer divisiones entre 0</div>
-  <div class="alert alert-danger" *ngIf="formProcess.hasError('invalidId')">El ID ya existe</div>
+  <div class="alert alert-danger" *ngIf="formProcess.get('id')?.hasError('invalidId')">El ID del proceso ya existe</div>
   <form [formGroup]="formProcess">
     <div class="input-group mb-3">
       <div class="input-group-prepend">
@@ -53,6 +53,7 @@
     </div>
 
     <div class="alert alert-danger" *ngIf="formProcess.get('time')?.hasError('min')">El tiempo debe ser mayor que 0.</div>
+    <div class="text-danger" *ngIf="formProcess.get('time')?.hasError('pattern')">Ingrese el tiempo como numero entero</div>
     <div class="input-group mb-3">
       <div class="input-group-prepend">
         <span class="input-group-text" id="time">Tiempo Maximo Estimado</span>
