@@ -9,7 +9,7 @@ export class Process {
   operation !: string;
   operator1 !: number;
   operator2 !: number;
-  result !: number;
+  result !: number | string;
   time !: number;
   timeExecution !: number;
   timeExecution$ !: Observable<number>;
@@ -119,9 +119,34 @@ export class Process {
     }, 1000);
   }
 
+  run() : void {
+    this.state = ProcessState.RUNNING;
+      this.timeExecution++;
+      this.calculateTimeRemaining();
+      if(this.timeRemaining === 0 && this.timeExecution === this.time) { //Finish process
+        this.executeOperation();
+        this.state = ProcessState.FINISHED;
+        clearInterval(this.intervalRef);
+
+        this.subject.next(this);
+        this.timeRemainingSubject.next(this.timeRemaining);
+        this.timeExecutionSubject.next(this.timeExecution);
+
+        this.subject.complete();
+        this.timeRemainingSubject.complete();
+        this.timeExecutionSubject.complete();
+      }
+  }
+
   interruptProcess(state :  ProcessState) : void {
     this.state = state;
     clearInterval(this.intervalRef);
+
+    if(state === ProcessState.ERROR) {
+      this.result = 'ERROR';
+      this.subject.next(this);
+      this.subject.complete();
+    }
 
     this.subject.next(this);
   }

@@ -20,6 +20,10 @@ export class NavbarComponent implements OnInit {
           {
             name: 'Actividad 2 - Práctica 1: Lotes',
             link: 'actividades/act2'
+          },
+          {
+            name: 'Actividad 4 - Práctica 2: Proceso por lotes con Multiprogramación	',
+            link: 'actividades/act4'
           }
         ]
       }

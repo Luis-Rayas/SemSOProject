@@ -67,7 +67,7 @@ export class ProcessManagerService {
       //Notification observables
       this.notifyAll();
       this.counterGlobalSubject.next(this.counterGlobal);
-    }, 1000);
+    }, 990);
   }
 
   private startNextBatch(): void {

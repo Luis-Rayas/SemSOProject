@@ -40,7 +40,7 @@
           <thead class="align-middle">
             <tr>
               <td>ID de Programa</td>
-              <td>Nombre del Programador</td>
+              <!-- <td>Nombre del Programador</td> -->
               <td>Operacion a Realizar</td>
               <td>Tpo. Max. Estimado</td>
               <td>Tpo. ejecucion</td>
@@ -50,7 +50,7 @@
           <tbody *ngIf="currentProcessRunning$ | async as process">
             <tr>
               <td>{{ process.id }}</td>
-              <td>{{ process.developer }}</td>
+              <!-- <td>{{ process.developer }}</td> -->
               <td>{{ process.operation }}</td>
               <td>{{ process.time }}</td>
               <td *ngIf="process.timeExecution$ | async as timeExecution">{{ timeExecution }}</td>
