@@ -1,5 +1,6 @@
 import { BehaviorSubject, Observable, Subject, delay } from "rxjs";
 import { ProcessState } from "./process.state.model";
+import { Signal, signal } from "@angular/core";
 
 export class Process {
   id !: number;
@@ -98,12 +99,13 @@ export class Process {
     }
   }
 
+  /** Deprecated */
   startProcess() : void {
     this.intervalRef = setInterval(() => {
       this.state = ProcessState.RUNNING;
       this.timeExecution++;
       this.calculateTimeRemaining();
-      if(this.timeRemaining === 0 && this.timeExecution === this.time) { //Finish process
+      if(this.timeRemaining === 0 && this.timeExecution === this.time || this.timeExecution >= this.time) { //Finish process
         this.executeOperation();
         this.state = ProcessState.FINISHED;
         clearInterval(this.intervalRef);
@@ -121,34 +123,36 @@ export class Process {
 
   run() : void {
     this.state = ProcessState.RUNNING;
-      this.timeExecution++;
-      this.calculateTimeRemaining();
-      if(this.timeRemaining === 0 && this.timeExecution === this.time) { //Finish process
-        this.executeOperation();
-        this.state = ProcessState.FINISHED;
-        clearInterval(this.intervalRef);
+    this.timeExecution++;
+    this.calculateTimeRemaining();
+    if(this.timeRemaining === 0 && this.timeExecution === this.time) { //Finish process
+      clearInterval(this.intervalRef);
+      this.state = ProcessState.FINISHED;
+      this.executeOperation();
 
-        this.subject.next(this);
-        this.timeRemainingSubject.next(this.timeRemaining);
-        this.timeExecutionSubject.next(this.timeExecution);
+      this.subject.next(this);
+      this.timeRemainingSubject.next(this.timeRemaining);
+      this.timeExecutionSubject.next(this.timeExecution);
 
-        this.subject.complete();
-        this.timeRemainingSubject.complete();
-        this.timeExecutionSubject.complete();
-      }
+      this.subject.complete();
+      this.timeRemainingSubject.complete();
+      this.timeExecutionSubject.complete();
+    }
   }
 
-  interruptProcess(state :  ProcessState) : void {
+  finishedProcess(state :  ProcessState) : void {
     this.state = state;
-    clearInterval(this.intervalRef);
+    this.intervalRef ? clearInterval(this.intervalRef) : null;
 
     if(state === ProcessState.ERROR) {
       this.result = 'ERROR';
+      this.timeExecutionSubject.complete();
+      this.timeRemainingSubject.complete();
       this.subject.next(this);
       this.subject.complete();
+    } else {
+      this.subject.next(this);
     }
-
-    this.subject.next(this);
   }
 }
 

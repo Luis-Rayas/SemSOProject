@@ -1,5 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { ProcessManagerService } from './services/process-manager.service';
+import { ProcessState } from './models/process.state.model';
 
 @Component({
   selector: 'app-root',
@@ -8,11 +9,27 @@ import { ProcessManagerService } from './services/process-manager.service';
 })
 export class AppComponent {
 
-  @HostListener('document:keypress', ['$event'])
+  @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    //console.log(event.key);
-    if (event.key === 'a') {
-      console.log(this._procesManagerService);
+    switch (event.key) {
+      case 'i':
+        console.log("Interrupcion");
+        this._procesManagerService.interrupt(ProcessState.PENDING);
+        break;
+      case 'e':
+        console.log("Error");
+        setTimeout(() => {
+          this._procesManagerService.interrupt(ProcessState.ERROR);
+        }, 600);
+        break;
+      case 'p':
+        console.log("Pausa");
+        this._procesManagerService.pause();
+        break;
+      case 'c':
+        console.log("Continuar");
+        this._procesManagerService.continue();
+        break;
     }
   }
 

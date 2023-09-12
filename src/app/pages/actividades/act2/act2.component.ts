@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NewProcessModalComponent } from './components/new-process-modal/new-process-modal.component';
 import { Act2Service } from './services/act2-service.service';
@@ -10,6 +10,7 @@ import { Process } from 'src/app/models/process.model';
   styleUrls: ['./act2.component.css'],
 })
 export class Act2Component {
+
 	constructor(
     private _modalService: NgbModal,
     private _act2Service: Act2Service

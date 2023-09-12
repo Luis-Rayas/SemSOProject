@@ -17,7 +17,7 @@ export class AddProcessRandomModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.cantProcesosForm = new FormGroup({
-      cantProcesos: new FormControl(0, [Validators.required, Validators.min(1), Validators.max(50)]),
+      cantProcesos: new FormControl(null, [Validators.required, Validators.min(1), Validators.max(50)]),
     });
   }
 

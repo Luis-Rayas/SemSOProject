@@ -10,12 +10,15 @@ import { ProcessState } from '../models/process.state.model';
 })
 export class ProcessManagerService {
 
+  canWork !: boolean;
+
   setIntervalRef !: any;
   counterGlobal !: number;
   batchsId !: number;
 
 
   listBatchsPendients !: Batch[];
+  listProcessFinished !: Process[];
   currentBatch !: Batch | null;
   private indexBatch !: number;
 
@@ -33,6 +36,8 @@ export class ProcessManagerService {
   private processFinishedSubject !: BehaviorSubject<Process[]>;
 
   constructor() {
+    this.canWork = true;
+
     this.counterGlobal = 0;
     this.batchsId = 0;
 
@@ -40,7 +45,7 @@ export class ProcessManagerService {
     this.currentBatch = null;
     this.indexBatch = 0;
 
-    //Testing
+    //Observables
     this.counterGlobalSubject = new BehaviorSubject<number>(0);
 
     this.currentBatchSubject = new BehaviorSubject<Batch | null>(null);
@@ -54,6 +59,28 @@ export class ProcessManagerService {
     this.processFinishedSubject = new BehaviorSubject<Process[]>([]);
   }
 
+  interrupt(stateProcess : ProcessState): void {
+    if(!this.canWork) {
+      return;
+    }
+    this.interruptProcess(stateProcess);
+    this.notifyProcessPendientsOfCurrentBatch();
+  }
+  pause() : void {
+    if(this.canWork) {
+      this.canWork = false;
+      this.interruptBatch(ProcessState.PAUSED);
+    }
+    this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+  }
+
+  continue() : void {
+    if(this.canWork == false) {
+      this.canWork = true;
+      this.startBatchs();
+    }
+  }
+
   startBatchs(): void {
     if(this.currentBatch && (this.currentBatch.state === BatchState.PENDING || this.currentBatch.state == BatchState.PAUSED)) {
       this.currentBatch.state = BatchState.RUNNING;
@@ -62,12 +89,13 @@ export class ProcessManagerService {
     } else {
       this.startNextBatch();
     }
+    this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
     this.setIntervalRef = setInterval(() => { //Run Program
       this.counterGlobal++;
       //Notification observables
       this.notifyAll();
       this.counterGlobalSubject.next(this.counterGlobal);
-    }, 990);
+    }, 850);
   }
 
   private startNextBatch(): void {
@@ -80,7 +108,7 @@ export class ProcessManagerService {
       this.currentBatch.state = BatchState.RUNNING;
       this.currentBatch.startBatch();
 
-      this.currentBatch?.subject.subscribe((batch) => {
+      this.currentBatch.observable.subscribe((batch) => {
         this.indexBatch++;
         this.currentBatch = null;
         this.startNextBatch();
@@ -90,6 +118,10 @@ export class ProcessManagerService {
       clearInterval(this.setIntervalRef);
     }
     this.notifyAll();
+  }
+
+  private interruptProcess(state: ProcessState): void {
+    this.currentBatch?.interruptProcess(state, true);
   }
 
   interruptBatch(state: ProcessState): void {
@@ -120,7 +152,7 @@ export class ProcessManagerService {
   notifyProcessPendientsOfCurrentBatch(): void {
     let processes : Process[] = [];
     if(this.currentBatch){
-      processes = this.currentBatch.filterProcessByState(ProcessState.PENDING)
+      processes = this.currentBatch.listProcess;
     }
     this.processPendientsOfCurrentBatchSubject.next(processes);
   }
@@ -133,10 +165,8 @@ export class ProcessManagerService {
   notifyProcessFinished(): void {
     const finishedProcesses: Process[] = [];
     this.listBatchsPendients.forEach(batch => {
-      batch.listProcess.forEach(process => {
-        if (process.state === ProcessState.FINISHED) {
-          finishedProcesses.push(process);
-        }
+      batch.listProcessFinished.forEach(process => {
+        finishedProcesses.unshift(process);
       });
     });
     this.processFinishedSubject.next(finishedProcesses);

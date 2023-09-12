@@ -13,12 +13,14 @@
             <tr>
               <td>ID de Programa</td>
               <td>Tiempo Maximo Estimado</td>
+              <td>Tiempo Ejecutado</td>
             </tr>
           </thead>
           <tbody *ngIf="processPendigsOfCurrentBatch$ | async as processes" >
             <tr *ngFor="let process of processes">
               <td>{{ process.id }}</td>
               <td>{{ process.time }}</td>
+              <td>{{ process.timeExecution }}</td>
             </tr>
           </tbody>
         </table>
@@ -62,7 +64,6 @@
       </div>
       <div class="card-footer" *ngIf="currentProcessRunning$ | async as process">
         <progressbar type="success" [value]="(process.timeExecution$ |async) ? process.timeExecution : 0" [max]="process.time"[striped]="true" [animate]="true">
-          <i>{{ (process.timeExecution$ | async) }} / {{ process.time }}</i>
         </progressbar>
       </div>
     </div>
