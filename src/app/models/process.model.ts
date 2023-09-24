@@ -1,158 +1,99 @@
 import { BehaviorSubject, Observable, Subject, delay } from "rxjs";
 import { ProcessState } from "./process.state.model";
-import { Signal, signal } from "@angular/core";
+import { WritableSignal, signal } from "@angular/core";
 
 export class Process {
   id !: number;
   state !: ProcessState;
-  batchId !: number;
-  developer !: string;
   operation !: string;
   operator1 !: number;
   operator2 !: number;
   result !: number | string;
+
+  //Tiempos
   time !: number;
+
+  timeArrived !: number | undefined;
+  timeFinished !: number | undefined;
+  timeReturned !: number | undefined;
+  timeAnswered !: number | undefined;
+  timeInWaiting !: number | undefined;
+  timeInService !: number | undefined;
+
   timeExecution !: number;
-  timeExecution$ !: Observable<number>;
-  timeExecutionSubject !: BehaviorSubject<number>;
+  readonly timeExecution$ !: WritableSignal<number>;
 
   timeRemaining !: number;
-  timeRemainingSubject !: BehaviorSubject<number>;
-  timeRemaining$ !: Observable<number>;
+  readonly timeRemaining$ !: WritableSignal<number>;
 
-  subject !: Subject<Process>;
-  observable !: Observable<Process>;
+  //Sujetos y observables para el proceso
+  readonly signal !: WritableSignal<Process>;
 
-  private intervalRef !: any;
+  // private intervalRef !: any;
 
   constructor(
     id: number,
-    developer: string,
     operation: string,
     operator1: number,
     operator2: number,
     time: number,
   ) {
     this.id = id;
-    this.state = ProcessState.PENDING;
-    this.batchId = 0;
-    this.developer = developer;
+    this.state = ProcessState.NEW;
     this.operation = operation;
     this.operator1 = operator1;
     this.operator2 = operator2;
     this.time = time;
 
+    this.timeArrived = undefined;
+    this.timeFinished = undefined;
+    this.timeReturned = undefined;
+    this.timeAnswered = undefined;
+    this.timeInWaiting = undefined;
+    this.timeInService = undefined;
+
     this.timeExecution = 0;
-    this.timeExecutionSubject = new BehaviorSubject<number>(0);
-    this.timeExecution$ = this.timeExecutionSubject.asObservable();
+    this.timeExecution$ = signal(0);
 
     this.timeRemaining = time;
-    this.timeRemainingSubject = new BehaviorSubject<number>(this.timeRemaining);
-    this.timeRemaining$ = this.timeRemainingSubject.asObservable();
+    this.timeRemaining$ = signal(this.timeRemaining);
 
-    this.subject = new Subject<Process>();
-    this.observable = this.subject.asObservable();
+    this.signal = signal(this);
     }
 
-
-  private calculateTimeRemaining() : number {
-    this.timeRemaining = this.time - this.timeExecution;
-
-    this.timeRemainingSubject.next(this.timeRemaining);
-    this.timeExecutionSubject.next(this.timeExecution);
-
-    return this.timeRemaining;
-  }
-
-  private executeOperation() : number {
-    switch (this.operation) {
-      case '+':
-        this.result = this.operator1 + this.operator2;
-        return this.result;
-      case '-':
-        this.result = this.operator1 - this.operator2;
-        return this.result;
-      case '*':
-        this.result = this.operator1 * this.operator2;
-        return this.result;
-      case '/':
-        try {
-          this.result = this.operator1 / this.operator2;
-        } catch (error) {
-          console.error(error);
-          this.result = 0;
-        }
-        return this.result;
-      case '%':
-        try {
-          this.result = this.operator1 % this.operator2;
-        } catch (error) {
-          console.error(error);
-          this.result = 0;
-        }
-        return this.result;
-      case '%%':
-        this.result = (this.operator2 * 100) / this.operator1;
-        return this.result;
-      default:
-        throw new Error('Operation not supported');
-    }
-  }
-
-  /** Deprecated */
-  startProcess() : void {
-    this.intervalRef = setInterval(() => {
-      this.state = ProcessState.RUNNING;
-      this.timeExecution++;
-      this.calculateTimeRemaining();
-      if(this.timeRemaining === 0 && this.timeExecution === this.time || this.timeExecution >= this.time) { //Finish process
-        this.executeOperation();
-        this.state = ProcessState.FINISHED;
-        clearInterval(this.intervalRef);
-
-        this.subject.next(this);
-        this.timeRemainingSubject.next(this.timeRemaining);
-        this.timeExecutionSubject.next(this.timeExecution);
-
-        this.subject.complete();
-        this.timeRemainingSubject.complete();
-        this.timeExecutionSubject.complete();
+    executeOperation() : number {
+      switch (this.operation) {
+        case '+':
+          this.result = this.operator1 + this.operator2;
+          return this.result;
+        case '-':
+          this.result = this.operator1 - this.operator2;
+          return this.result;
+        case '*':
+          this.result = this.operator1 * this.operator2;
+          return this.result;
+        case '/':
+          try {
+            this.result = this.operator1 / this.operator2;
+          } catch (error) {
+            console.error(error);
+            this.result = 0;
+          }
+          return this.result;
+        case '%':
+          try {
+            this.result = this.operator1 % this.operator2;
+          } catch (error) {
+            console.error(error);
+            this.result = 0;
+          }
+          return this.result;
+        case '%%':
+          this.result = (this.operator2 * 100) / this.operator1;
+          return this.result;
+        default:
+          throw new Error('Operation not supported');
       }
-    }, 1000);
-  }
-
-  run() : void {
-    this.state = ProcessState.RUNNING;
-    this.timeExecution++;
-    this.calculateTimeRemaining();
-    if(this.timeRemaining === 0 && this.timeExecution === this.time) { //Finish process
-      clearInterval(this.intervalRef);
-      this.state = ProcessState.FINISHED;
-      this.executeOperation();
-
-      this.subject.next(this);
-      this.timeRemainingSubject.next(this.timeRemaining);
-      this.timeExecutionSubject.next(this.timeExecution);
-
-      this.subject.complete();
-      this.timeRemainingSubject.complete();
-      this.timeExecutionSubject.complete();
     }
   }
-
-  finishedProcess(state :  ProcessState) : void {
-    this.state = state;
-    this.intervalRef ? clearInterval(this.intervalRef) : null;
-
-    if(state === ProcessState.ERROR) {
-      this.result = 'ERROR';
-      this.timeExecutionSubject.complete();
-      this.timeRemainingSubject.complete();
-      this.subject.next(this);
-      this.subject.complete();
-    } else {
-      this.subject.next(this);
-    }
-  }
-}
 

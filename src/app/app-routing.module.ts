@@ -1,19 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { ContainerComponent } from './components/main-layout/container.component';
 
 const routes: Routes = [
   {
-    path: 'actividades',
-    children: [
-      {
-        path: 'act2',
-        loadChildren: () => import('./pages/actividades/act2/act2.module').then(m => m.Act2Module)
-      },
-      {
-        path: 'act4',
-        loadChildren: () => import('./pages/actividades/act4/act4.module').then(m => m.Act4Module)
-      }
-    ]
+    path: '',
+    component: ContainerComponent
   }
 
 ];

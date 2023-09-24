@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
@@ -11,8 +9,6 @@ import { FooterComponent } from './components/footer/footer.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { ProcessManagerService } from './services/process-manager.service';
-import { EffectsModule } from '@ngrx/effects';
-import { StoreModule } from '@ngrx/store';
 
 @NgModule({
   declarations: [
@@ -24,11 +20,8 @@ import { StoreModule } from '@ngrx/store';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    FontAwesomeModule,
     NgbModule,
     ProgressbarModule.forRoot(),
-    EffectsModule.forRoot([]),
-    StoreModule.forRoot({}, {})
   ],
   providers: [
     ProcessManagerService

@@ -1,23 +1,17 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary bg-dark border-bottom border-body" data-bs-theme="dark">
   <div class="container-fluid">
-    <a class="navbar-brand" routerLink="/">Seminario de Solución de Sistemas Operativos</a>
+    <a class="navbar-brand" routerLink="/">
+      Seminario de Solución de Sistemas Operativos
+
+    </a>
+    <div class="navbar-brand text-white">
+      <i class="fa-brands fa-windows"></i> &nbsp;
+      <i class="fa-brands fa-apple"></i> &nbsp;
+      <i class="fa-brands fa-ubuntu"></i> &nbsp;
+    </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <span class="d-flex text-white">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li *ngFor="let item of practicas" class="nav-item dropdown dropstart">
-          <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown">{{ item.name }}</span>
-          <ng-container *ngIf="item.childs">
-            <ul class="dropdown-menu">
-              <li *ngFor="let child of item.childs">
-                <a class="dropdown-item" [routerLink]="child.link">{{ child.name }}</a>
-              </li>
-            </ul>
-          </ng-container>
-        </li>
-      </ul>
-    </span>
   </div>
 </nav>

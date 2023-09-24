@@ -1,7 +1,9 @@
 export enum ProcessState {
-  PENDING,
+  NEW,
+  READY,
   RUNNING,
-  PAUSED,
-  ERROR,
-  FINISHED
+  BLOCKED,
+  FINISHED,
+
+  ERROR
 }
