@@ -12,6 +12,9 @@ export class AppComponent {
   @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     switch (event.key) {
+      case 'a':
+        console.log(this._procesManagerService);
+        break;
       case 'i':
         console.log("Interrupcion");
         // this._procesManagerService.interrupt(ProcessState.PENDING);

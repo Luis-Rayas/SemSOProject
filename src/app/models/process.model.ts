@@ -1,6 +1,7 @@
-import { BehaviorSubject, Observable, Subject, delay } from "rxjs";
+import { BehaviorSubject, Observable, Subject, delay, from } from "rxjs";
 import { ProcessState } from "./process.state.model";
 import { WritableSignal, signal } from "@angular/core";
+import { ProcessManagerService } from "../services/process-manager.service";
 
 export class Process {
   id !: number;
@@ -10,15 +11,17 @@ export class Process {
   operator2 !: number;
   result !: number | string;
 
+  timeAwaitingintervalRef !: any;
+
   //Tiempos
   time !: number;
 
-  timeArrived !: number | undefined;
-  timeFinished !: number | undefined;
-  timeReturned !: number | undefined;
-  timeAnswered !: number | undefined;
-  timeInWaiting !: number | undefined;
-  timeInService !: number | undefined;
+  timeArrived !: number | null;
+  timeFinished !: number | null;
+  timeReturned !: number | null;
+  timeAnswered !: number | null;
+  timeInWaiting !: number | null;
+  timeInService !: number | null;
 
   timeExecution !: number;
   readonly timeExecution$ !: WritableSignal<number>;
@@ -37,6 +40,7 @@ export class Process {
     operator1: number,
     operator2: number,
     time: number,
+    private processManagerService: ProcessManagerService
   ) {
     this.id = id;
     this.state = ProcessState.NEW;
@@ -45,12 +49,12 @@ export class Process {
     this.operator2 = operator2;
     this.time = time;
 
-    this.timeArrived = undefined;
-    this.timeFinished = undefined;
-    this.timeReturned = undefined;
-    this.timeAnswered = undefined;
-    this.timeInWaiting = undefined;
-    this.timeInService = undefined;
+    this.timeArrived = null;
+    this.timeFinished = null;
+    this.timeReturned = null;
+    this.timeAnswered = null;
+    this.timeInWaiting = 0;
+    this.timeInService = 0;
 
     this.timeExecution = 0;
     this.timeExecution$ = signal(0);
@@ -94,6 +98,18 @@ export class Process {
         default:
           throw new Error('Operation not supported');
       }
+    }
+
+    initAwaiting() : void {
+      this.timeAwaitingintervalRef = setTimeout(() => {
+        this.timeInWaiting == undefined || this.timeInWaiting == null ? this.timeInWaiting = 0 : null;
+        this.timeInWaiting++;
+      });
+    }
+
+    changeContext(state : ProcessState) {
+      this.state = state;
+      this.signal.set(this);
     }
   }
 

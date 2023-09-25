@@ -2,10 +2,12 @@
   <div class="col-3">
     <div class="card">
       <div class="card-header">
-        <span class="fw-bold">Procesos Pendientes:  <i class="fa-solid fa-person-circle-question"></i></span>
+        <span class="fw-bold">Procesos Pendientes: {{listNewProcess$().length}} <i
+            class="fa-solid fa-person-circle-question"></i></span>
       </div>
       <div class="card-header">
-        <span>Procesos en estado LISTO: <i class="fa-solid fa-person-circle-exclamation"></i></span>
+        <span>Procesos en estado LISTO: {{listReadyProcess$().length}} <i
+            class="fa-solid fa-person-circle-exclamation"></i></span>
       </div>
       <div class="card-body table-responsive p-0">
         <table class="table table-sm table-striped table-hover rounded text-center">
@@ -29,6 +31,10 @@
             class="d-flex justify-content-center"></ngb-pagination>
         </div> -->
       </div>
+      <div class="card-footer">
+        <span class="fw-bold">Procesos Bloqueados: {{listBlockedProcess$().length}} <i
+            class="fa-solid fa-person-circle-minus"></i></span>
+      </div>
     </div>
   </div>
 
@@ -49,37 +55,76 @@
               <td>Tpo. por ejecutar</td>
             </tr>
           </thead>
-
+          <tbody>
+            <tr *ngIf="currentRunningProcess$() !== null && currentRunningProcess$() !== undefined">
+              <td>{{ currentRunningProcess$()?.id }}</td>
+              <td>{{ currentRunningProcess$()?.operation }}</td>
+              <td>{{ currentRunningProcess$()?.time }}</td>
+              <td>{{ currentRunningProcess$()?.timeExecution$() }}</td>
+              <td>{{ currentRunningProcess$()?.timeRemaining$() }}</td>
+            </tr>
+          </tbody>
         </table>
 
       </div>
       <!-- <div class="card-footer" *ngIf="currentProcessRunning$ | async as process"> -->
-        <!-- <progressbar type="success" [value]="(process.timeExecution$ |async) ? process.timeExecution : 0" [max]="process.time"[striped]="true" [animate]="true"> -->
-        <!-- </progressbar> -->
+      <!-- <progressbar type="success" [value]="(process.timeExecution$ |async) ? process.timeExecution : 0" [max]="process.time"[striped]="true" [animate]="true"> -->
+      <!-- </progressbar> -->
       <!-- </div> -->
     </div>
   </div>
+</div>
 
+<div class="row m-1">
   <div class="col">
     <div class="card">
       <div class="card-header">
-        <span>Procesos terminados <i class="fa-solid fa-person-circle-check"></i> | <i class="fa-solid fa-person-circle-xmark"></i></span>
+        <span>Procesos terminados: {{listFinishedProcess$().length}} <i class="fa-solid fa-person-circle-check"></i> |
+          <i class="fa-solid fa-person-circle-xmark"></i></span>
       </div>
       <div class="card-body table-responsive p-0">
         <table class="table table-dark table-sm table-striped table-hover rounded">
           <thead class="text-center align-middle">
             <tr>
+              <td></td>
               <td>ID de Programa</td>
               <td>Operacion Realizada</td>
               <td>Datos ingresados</td>
               <td>Resultado obtenido</td>
+              <td>Tiempo de Llegada</td>
+              <td>Tiempo de Finalizacion</td>
+              <td>Tiempo de Retorno</td>
+              <td>Tiempo de Respuesta</td>
+              <td>Tiempo de Espera</td>
+              <td>Tiempo de Servicio</td>
             </tr>
           </thead>
-
+          <tbody class="text-center">
+            <tr *ngFor="let process of listFinishedProcess$()">
+              <ng-template *ngIf="process.state === ProcessState.ERROR; then finishedError else finishedSuccess"></ng-template>
+              <ng-template #finishedError>
+                <td class="text-danger"><i class="fa-solid fa-circle-xmark"></i></td>
+              </ng-template>
+              <ng-template #finishedSuccess>
+                <td class="text-success"><i class="fa-solid fa-circle-check"></i></td>
+              </ng-template>
+              <td>{{ process.id }}</td>
+              <td>{{ process.operation }}</td>
+              <td>{{ process.operator1 }} {{ process.operator2 }}</td>
+              <td>{{ process.result }}</td>
+              <td>{{ process.timeArrived }}</td>
+              <td>{{ process.timeFinished }}</td>
+              <td>{{ process.timeReturned }}</td>
+              <td>{{ process.timeAnswered }}</td>
+              <td>{{ process.timeInWaiting }}</td>
+              <td>{{ process.timeInService }}</td>
+            </tr>
+          </tbody>
           <tfoot class="table-light">
             <tr class="text-center">
               <td colspan="2">'%' => MODULO</td>
               <td colspan="2">'%%' => PORCENTAJE</td>
+              <td colspan="7"></td>
             </tr>
           </tfoot>
         </table>
@@ -88,28 +133,31 @@
   </div>
 </div>
 <div class="position-absolute bottom-0 start-0 rounded-circle m-5">
-    <span class="btn btn-secondary"><i class="fa-solid fa-clock"></i> Contador Global: {{ counterGlobal$() }}</span>
+  <span class="btn btn-secondary"><i class="fa-solid fa-clock"></i> Contador Global: {{ counterGlobal$() }}</span>
 </div>
 
 <div class="dropup position-absolute bottom-0 end-0 rounded-circle m-5">
-  <button type="button" class="btn btn-success btn-lg rounded-circle  hide-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+  <button type="button" class="btn btn-success btn-lg rounded-circle  hide-toggle" data-bs-toggle="dropdown"
+    aria-expanded="false" aria-haspopup="true">
     <i class="fa-solid fa-plus"></i>
     <span class="d-none">Add Category</span>
   </button>
   <ul class="dropdown-menu">
     <li>
-      <button class="dropdown-item text-danger">
+      <button class="dropdown-item text-danger" (click)="reset()">
         <i class="fa-solid fa-circle-exclamation"></i>
         Reiniciar?</button>
     </li>
     <li>
-      <button class="dropdown-item">
+      <button class="dropdown-item" (click)="startProgram()">
         <i class="fa-solid fa-circle-play"></i>
         Iniciar Procesamiento</button>
     </li>
-    <li><hr class="dropdown-divider"></li>
     <li>
-      <button class="dropdown-item">
+      <hr class="dropdown-divider">
+    </li>
+    <li>
+      <button class="dropdown-item" (click)="addProcess()">
         <i class="fa-solid fa-plus"></i>
         Añadir Procesos nuevos</button>
     </li>
