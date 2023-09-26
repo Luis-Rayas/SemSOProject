@@ -1,16 +1,16 @@
-import { EffectRef, Injectable, WritableSignal, effect, signal } from '@angular/core';
+import { Injectable, WritableSignal, signal } from '@angular/core';
 import { Process } from '../models/process.model';
-import { BehaviorSubject, Observable, Subscription, from, of, take } from 'rxjs';
 import { ProcessState } from '../models/process.state.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ProcessManagerService{
+export class ProcessManagerService {
 
   private canWork !: boolean;
 
   private setIntervalRef !: any;
+  private setCountIntervalRef !: any;
 
   counterGlobal !: number;
   counterGlobal$ !: WritableSignal<number>;
@@ -27,7 +27,6 @@ export class ProcessManagerService{
   currentRunningProcess !: Process | undefined | null;
   currentRunningProcess$ !: WritableSignal<Process | undefined | null>;
   throwRunningProcessRef !: any;
-  effectRunningProcess !: EffectRef;
 
 
   listFinishedProcess !: Process[];
@@ -54,43 +53,59 @@ export class ProcessManagerService{
     this.listFinishedProcess$ = signal(this.listFinishedProcess);
 
     this.currentRunningProcess$ = signal(this.currentRunningProcess);
-    this.effectRunningProcess = effect(() => {
-      const process = this.currentRunningProcess;
-      console.log(process);
-      if(process) {
-        this.runProcess(process);
-      }
-    });
 
     this.idProcess = 1;
   }
 
   startProgram(): void {
     this.setIntervalRef = setInterval(() => {
+      if (this.currentRunningProcess) {
+        this.runProcess(this.currentRunningProcess);
+      } else {
+        this.startNextProcess();
+      }
+    }, 1000);
+    this.setCountIntervalRef = setInterval(() => {
       this.counterGlobal$.update(() => this.counterGlobal++);
-
     }, 1000);
   }
 
-  private addReadyProcess() : void {
-    const MAX_READY_PROCESSES = 5; // Define el número máximo de procesos en listReadyProcess
+  startNextProcess(): void {
+    this.addProcessToMemory();
 
-    while (this.listReadyProcess.length < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
-      const process = this.listNewProcess.shift();
-      process ? this.listReadyProcess.push(process) : null;
+    if (this.listReadyProcess.length > 0) {
+      this.currentRunningProcess = this.listReadyProcess.shift();
+      this.currentRunningProcess$.set(this.currentRunningProcess);
+      this.currentRunningProcess ? this.runProcess(this.currentRunningProcess) : null;
+    } else { //Ya acabo
+      clearInterval(this.setIntervalRef);
+      clearInterval(this.setCountIntervalRef);
     }
-    this.listNewProcess$.set(this.listNewProcess);
-    this.listReadyProcess$.set(this.listReadyProcess);
   }
 
-  /**
+  private addProcessToMemory(): void {
+    const MAX_READY_PROCESSES = 5; // Define el número máximo de procesos en listReadyProcess
+
+    if (this.listReadyProcess.length < MAX_READY_PROCESSES) {
+      while (this.listReadyProcess.length < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
+        let process = this.listNewProcess.shift();
+        process != null && process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
+        process ? this.listReadyProcess.push(process) : null;
+      }
+      this.listNewProcess$.set(this.listNewProcess);
+      this.listReadyProcess$.set(this.listReadyProcess);
+      this.counterGlobal$.set(this.counterGlobal);
+    }
+  }
+
+  /*
     A. Tiempo de Llegada: Hora en la que el proceso entra al sistema.
     b. Tiempo de Finalización: Hora en la que el proceso termino.
     c. Tiempo de Retorno: Tiempo total desde que el proceso llega hasta que termina.
     d. Tiempo de Respuesta: Tiempo transcurrido desde que llega hasta que es atendido por
     primera vez.
     e. Tiempo de Espera: Tiempo que el proceso ha estado esperando para usar el
-    procesador.
+    procesador. (Te = TRetorno - TServicio)
     f. Tiempo de Servicio: Tiempo que el proceso ha estado dentro del procesador. (Si el
     proceso termino su ejecución normal es el TME, de no ser así es el tiempo
     transcurrido)
@@ -98,41 +113,54 @@ export class ProcessManagerService{
 
   private runProcess(process: Process): void {
     process.state = ProcessState.RUNNING;
-    this.throwRunningProcessRef ? clearTimeout(this.throwRunningProcessRef) : null;
-    this.throwRunningProcessRef = setTimeout(() => {
+    process.timeAnswered == null ? process.timeAnswered = this.counterGlobal : null;
 
-      process.timeAnswered == null ? process.timeAnswered = this.counterGlobal : null;
 
-      process.timeExecution++;
-      process.timeRemaining$.set(process.timeRemaining);
-      process.timeRemaining = process.time - process.timeExecution;
-      process.timeExecution$.set(process.timeExecution);
+    process.timeRemaining$.update(() => process.timeRemaining = process.time - process.timeExecution);
+    process.timeExecution$.update(() => process.timeExecution++);
 
-      if(process.timeRemaining === 0 && process.timeExecution === process.time || process.timeExecution >= process.time) { //Finish process
-        process.state = ProcessState.FINISHED;
-        process.timeFinished = this.counterGlobal;
+    if (process.timeRemaining$() === 0 && process.timeExecution$() === process.time /*|| process.timeExecution$() >= process.time*/) { //Finish process
+      process.state = ProcessState.FINISHED;
+      process.timeFinished = this.counterGlobal;
+      process.timeReturned = process.timeInService + process.timeInWaiting;
+      process.timeInWaiting = process.timeReturned - process.timeInService;
 
-        this.listFinishedProcess.unshift(process);
-        clearTimeout(this.throwRunningProcessRef);
-        process.signal.set(process);
-      }
-    }, 1000);
+      process.executeOperation();
+
+      this.listFinishedProcess.unshift(process);
+      this.listFinishedProcess$.set(this.listFinishedProcess);
+      this.currentRunningProcess = null;
+      this.currentRunningProcess$.set(this.currentRunningProcess);
+      this.startNextProcess();
+      return;
+    }
+    process.timeInService++;
+
   }
 
   //Evaluar estado del proceso
-  changeContextProcess(process: Process): void {
-
+  changeContextProcess(toNextState: ProcessState): void {
+    if (this.currentRunningProcess) {
+      const state = this.currentRunningProcess.state; //Running
+      switch (toNextState) {
+        case ProcessState.RUNNING:
+          this.currentRunningProcess.state = toNextState;
+          this.currentRunningProcess = null;
+          this.currentRunningProcess$.set(this.currentRunningProcess);
+          break;
+      }
+    }
   }
 
   //VALIDACIONES
   isValidIdProcess(id: number): boolean {
-    let valid = this.listNewProcess.some((proceso : Process) => proceso.id === id);
+    let valid = this.listNewProcess.some((proceso: Process) => proceso.id === id);
     //Some retora true si existe, si no, devuelve false
     return !valid;
   }
 
   isValidProcess(process: Process): boolean {
-    if((process.operation === '/' || process.operation === '%') && process.operator2 === 0) {
+    if ((process.operation === '/' || process.operation === '%') && process.operator2 === 0) {
       return false;
     }
     return true;
@@ -140,7 +168,7 @@ export class ProcessManagerService{
   //FIN VALIDACIONES
 
   addProcess(process: Process): void {
-    if(this.isValidProcess(process) && this.isValidIdProcess(process.id)){
+    if (this.isValidProcess(process) && this.isValidIdProcess(process.id)) {
       this.listNewProcess.push(process);
       this.listNewProcess$.set(this.listNewProcess);
       this.idProcess++;
@@ -149,10 +177,12 @@ export class ProcessManagerService{
     }
   }
 
-  reset() : void{
+  reset(): void {
     this.canWork = true;
     this.counterGlobal = 0;
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+
+    this.currentRunningProcess = null;
 
     this.idProcess = 1;
     this.listNewProcess = [];
@@ -161,6 +191,7 @@ export class ProcessManagerService{
     this.currentRunningProcess = null;
     this.listFinishedProcess = [];
 
+    this.currentRunningProcess$.set(this.currentRunningProcess);
     this.counterGlobal$.set(this.counterGlobal);
     this.listNewProcess$.set(this.listNewProcess);
     this.listReadyProcess$.set(this.listReadyProcess);

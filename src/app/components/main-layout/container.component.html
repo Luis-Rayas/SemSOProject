@@ -18,13 +18,13 @@
               <td>Tiempo Ejecutado</td>
             </tr>
           </thead>
-          <!-- <tbody *ngIf="processPendigsOfCurrentBatch$ | async as processes" >
-            <tr *ngFor="let process of processes">
+          <tbody>
+            <tr *ngFor="let process of listReadyProcess$()">
               <td>{{ process.id }}</td>
               <td>{{ process.time }}</td>
-              <td>{{ process.timeExecution }}</td>
+              <td>{{ process.timeExecution$() }}</td>
             </tr>
-          </tbody> -->
+          </tbody>
         </table>
         <!-- <div class="d-flex justify-content-betweend">
           <ngb-pagination [page]="1" [pageSize]="5" [collectionSize]="11" size="sm"
@@ -91,6 +91,7 @@
               <td>Operacion Realizada</td>
               <td>Datos ingresados</td>
               <td>Resultado obtenido</td>
+              <td>Tiempo Estimado</td>
               <td>Tiempo de Llegada</td>
               <td>Tiempo de Finalizacion</td>
               <td>Tiempo de Retorno</td>
@@ -110,8 +111,9 @@
               </ng-template>
               <td>{{ process.id }}</td>
               <td>{{ process.operation }}</td>
-              <td>{{ process.operator1 }} {{ process.operator2 }}</td>
+              <td>{{ process.operator1 }} | {{ process.operator2 }}</td>
               <td>{{ process.result }}</td>
+              <td>{{ process.time }}</td>
               <td>{{ process.timeArrived }}</td>
               <td>{{ process.timeFinished }}</td>
               <td>{{ process.timeReturned }}</td>
@@ -124,7 +126,7 @@
             <tr class="text-center">
               <td colspan="2">'%' => MODULO</td>
               <td colspan="2">'%%' => PORCENTAJE</td>
-              <td colspan="7"></td>
+              <td colspan="8"></td>
             </tr>
           </tfoot>
         </table>

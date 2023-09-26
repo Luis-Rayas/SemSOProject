@@ -11,17 +11,15 @@ export class Process {
   operator2 !: number;
   result !: number | string;
 
-  timeAwaitingintervalRef !: any;
-
   //Tiempos
   time !: number;
 
   timeArrived !: number | null;
   timeFinished !: number | null;
-  timeReturned !: number | null;
+  timeReturned !: number;
   timeAnswered !: number | null;
-  timeInWaiting !: number | null;
-  timeInService !: number | null;
+  timeInWaiting !: number;
+  timeInService !: number;
 
   timeExecution !: number;
   readonly timeExecution$ !: WritableSignal<number>;
@@ -51,7 +49,7 @@ export class Process {
 
     this.timeArrived = null;
     this.timeFinished = null;
-    this.timeReturned = null;
+    this.timeReturned = 0;
     this.timeAnswered = null;
     this.timeInWaiting = 0;
     this.timeInService = 0;
@@ -98,13 +96,6 @@ export class Process {
         default:
           throw new Error('Operation not supported');
       }
-    }
-
-    initAwaiting() : void {
-      this.timeAwaitingintervalRef = setTimeout(() => {
-        this.timeInWaiting == undefined || this.timeInWaiting == null ? this.timeInWaiting = 0 : null;
-        this.timeInWaiting++;
-      });
     }
 
     changeContext(state : ProcessState) {
