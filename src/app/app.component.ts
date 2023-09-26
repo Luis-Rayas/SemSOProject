@@ -17,21 +17,21 @@ export class AppComponent {
         break;
       case 'i':
         console.log("Interrupcion");
-        // this._procesManagerService.interrupt(ProcessState.PENDING);
+        this._procesManagerService.interrupt();
         break;
       case 'e':
         console.log("Error");
         setTimeout(() => {
-          // this._procesManagerService.interrupt(ProcessState.ERROR);
+          this._procesManagerService.error();
         }, 600);
         break;
       case 'p':
         console.log("Pausa");
-        // this._procesManagerService.pause();
+        this._procesManagerService.pause();
         break;
       case 'c':
         console.log("Continuar");
-        // this._procesManagerService.continue();
+        this._procesManagerService.continue();
         break;
     }
   }

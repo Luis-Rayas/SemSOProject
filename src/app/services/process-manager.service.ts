@@ -58,6 +58,9 @@ export class ProcessManagerService {
   }
 
   startProgram(): void {
+    this.setCountIntervalRef ? clearInterval(this.setCountIntervalRef) : null;
+    this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+
     this.setIntervalRef = setInterval(() => {
       if (this.currentRunningProcess) {
         this.runProcess(this.currentRunningProcess);
@@ -78,8 +81,11 @@ export class ProcessManagerService {
       this.currentRunningProcess$.set(this.currentRunningProcess);
       this.currentRunningProcess ? this.runProcess(this.currentRunningProcess) : null;
     } else { //Ya acabo
-      clearInterval(this.setIntervalRef);
-      clearInterval(this.setCountIntervalRef);
+      if(this.listBlockedProcess.length == 0 && this.listNewProcess.length == 0){
+        //Finaliza si y solo si la lsita de bloqueados y nuevos esta vacia
+        clearInterval(this.setIntervalRef);
+        clearInterval(this.setCountIntervalRef);
+      }
     }
   }
 
@@ -87,10 +93,12 @@ export class ProcessManagerService {
     const MAX_READY_PROCESSES = 5; // Define el número máximo de procesos en listReadyProcess
 
     if (this.listReadyProcess.length < MAX_READY_PROCESSES) {
-      while (this.listReadyProcess.length < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
+      while ((this.listReadyProcess.length + this.listBlockedProcess.length) < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
         let process = this.listNewProcess.shift();
-        process != null && process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
-        process ? this.listReadyProcess.push(process) : null;
+        if(process) {
+          process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
+          this.listReadyProcess.push(process);
+        }
       }
       this.listNewProcess$.set(this.listNewProcess);
       this.listReadyProcess$.set(this.listReadyProcess);
@@ -120,35 +128,55 @@ export class ProcessManagerService {
     process.timeExecution$.update(() => process.timeExecution++);
 
     if (process.timeRemaining$() === 0 && process.timeExecution$() === process.time /*|| process.timeExecution$() >= process.time*/) { //Finish process
-      process.state = ProcessState.FINISHED;
-      process.timeFinished = this.counterGlobal;
-      process.timeReturned = process.timeInService + process.timeInWaiting;
-      process.timeInWaiting = process.timeReturned - process.timeInService;
-
-      process.executeOperation();
-
-      this.listFinishedProcess.unshift(process);
-      this.listFinishedProcess$.set(this.listFinishedProcess);
-      this.currentRunningProcess = null;
-      this.currentRunningProcess$.set(this.currentRunningProcess);
-      this.startNextProcess();
-      return;
+      this.finishedProcess(ProcessState.FINISHED);
     }
     process.timeInService++;
 
   }
 
-  //Evaluar estado del proceso
-  changeContextProcess(toNextState: ProcessState): void {
-    if (this.currentRunningProcess) {
-      const state = this.currentRunningProcess.state; //Running
-      switch (toNextState) {
-        case ProcessState.RUNNING:
-          this.currentRunningProcess.state = toNextState;
-          this.currentRunningProcess = null;
-          this.currentRunningProcess$.set(this.currentRunningProcess);
-          break;
+  interrupt(): void {
+    if (this.canWork) {
+      if (this.currentRunningProcess) {
+        this.currentRunningProcess.state = ProcessState.BLOCKED;
+        this.listBlockedProcess.unshift(this.currentRunningProcess);
+        this.listBlockedProcess$.set(this.listBlockedProcess);
+        setTimeout(() => {
+          const process = this.listBlockedProcess.shift();
+          if(process){
+            process.state = ProcessState.READY;
+            this.listReadyProcess.push(process);
+          }
+          this.listBlockedProcess$.set(this.listBlockedProcess);
+          this.listReadyProcess$.set(this.listReadyProcess);
+          if(this.currentRunningProcess == null && this.canWork) {
+            this.startNextProcess();
+          }
+        }, 5000);
+        this.currentRunningProcess = null;
+        this.currentRunningProcess$.set(this.currentRunningProcess);
+        this.startNextProcess();
       }
+    }
+  }
+
+  error(): void {
+    if (this.currentRunningProcess != null && this.currentRunningProcess != undefined) {
+      this.finishedProcess(ProcessState.ERROR);
+    }
+  }
+
+  pause(): void {
+    if (this.canWork === true) {
+      this.canWork = false;
+    }
+    this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+    this.setCountIntervalRef ? clearInterval(this.setCountIntervalRef) : null;
+  }
+
+  continue(): void {
+    if (this.canWork === false) {
+      this.canWork = true;
+      this.startProgram();
     }
   }
 
@@ -197,5 +225,27 @@ export class ProcessManagerService {
     this.listReadyProcess$.set(this.listReadyProcess);
     this.listBlockedProcess$.set(this.listBlockedProcess);
     this.listFinishedProcess$.set(this.listFinishedProcess);
+  }
+
+  private finishedProcess(state : ProcessState): void {
+    let process = this.currentRunningProcess;
+    if(process){
+      process.state = state;
+      process.timeFinished = this.counterGlobal;
+      if(process.timeArrived != null)
+      process.timeReturned = process.timeFinished - process.timeArrived;
+      process.timeInWaiting = process.timeReturned - process.timeInService;
+
+      state === ProcessState.FINISHED ? process.executeOperation() : process.result = 'ERROR';
+
+      this.listFinishedProcess.unshift(process);
+      this.listFinishedProcess$.set(this.listFinishedProcess);
+      this.currentRunningProcess = null;
+      this.currentRunningProcess$.set(this.currentRunningProcess);
+      this.startNextProcess();
+      process = null;
+      return;
+    }
+    process = null;
   }
 }
