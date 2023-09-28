@@ -21,6 +21,10 @@ export class Process {
   timeInWaiting !: number;
   timeInService !: number;
 
+  timeBlocked !: number;
+  timeBlocked$ !: WritableSignal<number>;
+  refTimeBlocked !: any;
+
   timeExecution !: number;
   readonly timeExecution$ !: WritableSignal<number>;
 
@@ -38,7 +42,6 @@ export class Process {
     operator1: number,
     operator2: number,
     time: number,
-    private processManagerService: ProcessManagerService
   ) {
     this.id = id;
     this.state = ProcessState.NEW;
@@ -53,6 +56,9 @@ export class Process {
     this.timeAnswered = null;
     this.timeInWaiting = 0;
     this.timeInService = 0;
+
+    this.timeBlocked = 0;
+    this.timeBlocked$ = signal(0);
 
     this.timeExecution = 0;
     this.timeExecution$ = signal(0);

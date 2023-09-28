@@ -10,7 +10,6 @@ export class ProcessManagerService {
   private canWork !: boolean;
 
   private setIntervalRef !: any;
-  private setCountIntervalRef !: any;
 
   counterGlobal !: number;
   counterGlobal$ !: WritableSignal<number>;
@@ -58,19 +57,22 @@ export class ProcessManagerService {
   }
 
   startProgram(): void {
-    this.setCountIntervalRef ? clearInterval(this.setCountIntervalRef) : null;
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
 
     this.setIntervalRef = setInterval(() => {
+      this.addProcessToMemory();
       if (this.currentRunningProcess) {
         this.runProcess(this.currentRunningProcess);
       } else {
         this.startNextProcess();
       }
-    }, 1000);
-    this.setCountIntervalRef = setInterval(() => {
+      this.reduceBlockTime();
       this.counterGlobal$.update(() => this.counterGlobal++);
-    }, 1000);
+      }, 1000);
+  }
+
+  runProgram(): void {
+
   }
 
   startNextProcess(): void {
@@ -81,21 +83,21 @@ export class ProcessManagerService {
       this.currentRunningProcess$.set(this.currentRunningProcess);
       this.currentRunningProcess ? this.runProcess(this.currentRunningProcess) : null;
     } else { //Ya acabo
-      if(this.listBlockedProcess.length == 0 && this.listNewProcess.length == 0){
+      if (this.listBlockedProcess.length == 0 && this.listNewProcess.length == 0) {
         //Finaliza si y solo si la lsita de bloqueados y nuevos esta vacia
         clearInterval(this.setIntervalRef);
-        clearInterval(this.setCountIntervalRef);
       }
     }
   }
 
   private addProcessToMemory(): void {
-    const MAX_READY_PROCESSES = 5; // Define el número máximo de procesos en listReadyProcess
+    let MAX_READY_PROCESSES = undefined; // Define el número máximo de procesos en listReadyProcess
+    this.currentRunningProcess != null ? MAX_READY_PROCESSES = 4 : MAX_READY_PROCESSES = 5;
 
     if (this.listReadyProcess.length < MAX_READY_PROCESSES) {
       while ((this.listReadyProcess.length + this.listBlockedProcess.length) < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
         let process = this.listNewProcess.shift();
-        if(process) {
+        if (process) {
           process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
           this.listReadyProcess.push(process);
         }
@@ -106,22 +108,12 @@ export class ProcessManagerService {
     }
   }
 
-  /*
-    A. Tiempo de Llegada: Hora en la que el proceso entra al sistema.
-    b. Tiempo de Finalización: Hora en la que el proceso termino.
-    c. Tiempo de Retorno: Tiempo total desde que el proceso llega hasta que termina.
-    d. Tiempo de Respuesta: Tiempo transcurrido desde que llega hasta que es atendido por
-    primera vez.
-    e. Tiempo de Espera: Tiempo que el proceso ha estado esperando para usar el
-    procesador. (Te = TRetorno - TServicio)
-    f. Tiempo de Servicio: Tiempo que el proceso ha estado dentro del procesador. (Si el
-    proceso termino su ejecución normal es el TME, de no ser así es el tiempo
-    transcurrido)
-   */
 
   private runProcess(process: Process): void {
     process.state = ProcessState.RUNNING;
-    process.timeAnswered == null ? process.timeAnswered = this.counterGlobal : null;
+    //Reloj - tiempo de llegada
+    if (process.timeArrived != null)
+      process.timeAnswered == null ? process.timeAnswered = this.counterGlobal$() - process.timeArrived : null;
 
 
     process.timeRemaining$.update(() => process.timeRemaining = process.time - process.timeExecution);
@@ -129,37 +121,35 @@ export class ProcessManagerService {
 
     if (process.timeRemaining$() === 0 && process.timeExecution$() === process.time /*|| process.timeExecution$() >= process.time*/) { //Finish process
       this.finishedProcess(ProcessState.FINISHED);
+      return;
     }
     process.timeInService++;
 
   }
 
   interrupt(): void {
-    if (this.canWork) {
-      if (this.currentRunningProcess) {
-        this.currentRunningProcess.state = ProcessState.BLOCKED;
-        this.listBlockedProcess.unshift(this.currentRunningProcess);
-        this.listBlockedProcess$.set(this.listBlockedProcess);
-        setTimeout(() => {
-          const process = this.listBlockedProcess.shift();
-          if(process){
-            process.state = ProcessState.READY;
-            this.listReadyProcess.push(process);
-          }
-          this.listBlockedProcess$.set(this.listBlockedProcess);
-          this.listReadyProcess$.set(this.listReadyProcess);
-          if(this.currentRunningProcess == null && this.canWork) {
-            this.startNextProcess();
-          }
-        }, 5000);
-        this.currentRunningProcess = null;
-        this.currentRunningProcess$.set(this.currentRunningProcess);
-        this.startNextProcess();
-      }
+    if (this.canWork == false) {
+      return;
+    }
+    if (this.currentRunningProcess) {
+      const process = this.currentRunningProcess;
+
+      process.timeBlocked$.update(() => process.timeBlocked = 5);
+
+      process.state = ProcessState.BLOCKED;
+      this.listBlockedProcess.unshift(process);
+      this.listBlockedProcess$.set(this.listBlockedProcess);
+
+      this.currentRunningProcess = null;
+      this.currentRunningProcess$.set(this.currentRunningProcess);
+      this.startNextProcess();
     }
   }
 
   error(): void {
+    if(this.canWork == false){
+      return;
+    }
     if (this.currentRunningProcess != null && this.currentRunningProcess != undefined) {
       this.finishedProcess(ProcessState.ERROR);
     }
@@ -170,13 +160,33 @@ export class ProcessManagerService {
       this.canWork = false;
     }
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
-    this.setCountIntervalRef ? clearInterval(this.setCountIntervalRef) : null;
   }
 
   continue(): void {
     if (this.canWork === false) {
       this.canWork = true;
       this.startProgram();
+    }
+  }
+
+  reduceBlockTime(): void {
+    if (this.listBlockedProcess.length > 0) {
+      this.listBlockedProcess.forEach((process: Process) => {
+        process.timeBlocked$.update(() => process.timeBlocked--);
+        if (process.timeBlocked$() == 0 || process.timeBlocked$() < 0) {
+          const process = this.listBlockedProcess.pop();
+          if (process) {
+            clearTimeout(process.refTimeBlocked);
+            process.state = ProcessState.READY;
+            this.listReadyProcess.push(process);
+          }
+          this.listBlockedProcess$.set(this.listBlockedProcess);
+          this.listReadyProcess$.set(this.listReadyProcess);
+          if (this.currentRunningProcess == null && this.canWork) {
+            this.startNextProcess();
+          }
+        }
+      });
     }
   }
 
@@ -227,13 +237,31 @@ export class ProcessManagerService {
     this.listFinishedProcess$.set(this.listFinishedProcess);
   }
 
-  private finishedProcess(state : ProcessState): void {
+    /*
+    A. Tiempo de Llegada: Hora en la que el proceso entra al sistema.
+    b. Tiempo de Finalización: Hora en la que el proceso termino.
+    c. Tiempo de Retorno: Tiempo total desde que el proceso llega hasta que termina.
+    (TRetorno = TFinalizado - TLlegada)
+    d. Tiempo de Respuesta: Tiempo transcurrido desde que llega hasta que es atendido por
+    primera vez. (TResp = Contador global cuando entra por primera vez a procesamiento)
+    e. Tiempo de Espera: Tiempo que el proceso ha estado esperando para usar el
+    procesador. (Te = TRetorno - TServicio)
+    f. Tiempo de Servicio: Tiempo que el proceso ha estado dentro del procesador. (Si el
+    proceso termino su ejecución normal es el TME, de no ser así es el tiempo
+    transcurrido)
+   */
+  private finishedProcess(state: ProcessState): void {
     let process = this.currentRunningProcess;
-    if(process){
+    if (process) {
       process.state = state;
       process.timeFinished = this.counterGlobal;
-      if(process.timeArrived != null)
-      process.timeReturned = process.timeFinished - process.timeArrived;
+      if (process.timeArrived != null)
+        process.timeReturned = process.timeFinished - process.timeArrived;
+      //Tiempo de Retorno = Tiempo de espera + Tiempo de servicio
+      /*
+      NOTA: Siguiente practica
+      Tiempo de espera = (Contador global - Tiempo de llegada) - Tiempo transcurrido
+      */
       process.timeInWaiting = process.timeReturned - process.timeInService;
 
       state === ProcessState.FINISHED ? process.executeOperation() : process.result = 'ERROR';
@@ -244,7 +272,6 @@ export class ProcessManagerService {
       this.currentRunningProcess$.set(this.currentRunningProcess);
       this.startNextProcess();
       process = null;
-      return;
     }
     process = null;
   }

@@ -1,4 +1,38 @@
-<div class="row m-1">
+
+<div class="position-absolute top-0 start-0 rounded-circle m-5">
+  <span class="btn btn-secondary mt-3"><i class="fa-solid fa-clock"></i> Contador Global: {{ counterGlobal$() }}</span>
+</div>
+
+<div class="dropup position-absolute top-0 end-0 rounded-circle m-5">
+  <button type="button" class="btn btn-success btn-lg rounded-circle  hide-toggle mt-2" data-bs-toggle="dropdown"
+    aria-expanded="false" aria-haspopup="true">
+    <i class="fa-solid fa-plus"></i>
+    <span class="d-none">Add Category</span>
+  </button>
+  <ul class="dropdown-menu">
+    <li>
+      <button class="dropdown-item text-danger" (click)="reset()">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        Reiniciar?</button>
+    </li>
+    <li>
+      <button class="dropdown-item" (click)="startProgram()">
+        <i class="fa-solid fa-circle-play"></i>
+        Iniciar Procesamiento</button>
+    </li>
+    <li>
+      <hr class="dropdown-divider">
+    </li>
+    <li>
+      <button class="dropdown-item" (click)="addProcess()">
+        <i class="fa-solid fa-plus"></i>
+        Añadir Procesos nuevos</button>
+    </li>
+  </ul>
+</div>
+
+
+<div class="row m-1 mt-5">
   <div class="col-3">
     <div class="card">
       <div class="card-header">
@@ -9,27 +43,44 @@
         <span>Procesos en estado LISTO: {{listReadyProcess$().length}} <i
             class="fa-solid fa-person-circle-exclamation"></i></span>
       </div>
-      <div class="card-body table-responsive p-0">
-        <table class="table table-sm table-striped table-hover rounded text-center">
-          <thead class="align-middle table-dark">
-            <tr>
-              <td>ID de Programa</td>
-              <td>Tiempo Maximo Estimado</td>
-              <td>Tiempo Ejecutado</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let process of listReadyProcess$()">
-              <td>{{ process.id }}</td>
-              <td>{{ process.time }}</td>
-              <td>{{ process.timeExecution$() }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer">
-        <span class="fw-bold">Procesos Bloqueados: {{listBlockedProcess$().length}} <i
-            class="fa-solid fa-person-circle-minus"></i></span>
+      <div class="card-body ">
+        <div class="row table-responsive p-0">
+          <table class="table table-sm table-striped table-hover rounded text-center">
+            <thead class="align-middle table-dark">
+              <tr>
+                <td>ID de Programa</td>
+                <td>Tiempo Maximo Estimado</td>
+                <td>Tiempo Ejecutado</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let process of listReadyProcess$()">
+                <td>{{ process.id }}</td>
+                <td>{{ process.time }}</td>
+                <td>{{ process.timeExecution$() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <hr />
+        <div class="row">
+          <span class="fw-bold">Procesos Bloqueados: {{listBlockedProcess$().length}} <i
+              class="fa-solid fa-person-circle-minus"></i></span>
+          <table class="table table-dark table-sm text-center">
+            <thead>
+              <tr>
+                <th>ID Programa</th>
+                <th>Tiempo Restante bloqueado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let process of listBlockedProcess$()">
+                <td>{{ process.id }}</td>
+                <td>{{ process.timeBlocked$() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -54,7 +105,7 @@
           <tbody>
             <tr *ngIf="currentRunningProcess$() !== null && currentRunningProcess$() !== undefined">
               <td>{{ currentRunningProcess$()?.id }}</td>
-              <td>{{ currentRunningProcess$()?.operation }}</td>
+              <td>{{ currentRunningProcess$()?.operator1 }} {{ currentRunningProcess$()?.operation }} {{ currentRunningProcess$()?.operator2 }}</td>
               <td>{{ currentRunningProcess$()?.time }}</td>
               <td>{{ currentRunningProcess$()?.timeExecution$() }}</td>
               <td>{{ currentRunningProcess$()?.timeRemaining$() }}</td>
@@ -64,11 +115,8 @@
 
       </div>
       <div class="card-footer" *ngIf="currentRunningProcess$() !== null && currentRunningProcess$() !== undefined">
-      <ngb-progressbar type="success"
-          [value]="currentRunningProcess$()?.timeExecution$() ?? 0"
-          [max]="currentRunningProcess$()?.time ?? 0"
-          [striped]="true"
-          [animated]="true">
+        <ngb-progressbar type="success" [value]="currentRunningProcess$()?.timeExecution$() ?? 0"
+          [max]="currentRunningProcess$()?.time ?? 0" [striped]="true" [animated]="true">
         </ngb-progressbar>
       </div>
     </div>
@@ -105,12 +153,13 @@
           </thead>
           <tbody class="text-center">
             <tr *ngFor="let process of listFinishedProcess$()">
-              <ng-template *ngIf="process.state === ProcessState.ERROR; then finishedError else finishedSuccess"></ng-template>
+              <ng-template
+                *ngIf="process.state === ProcessState.ERROR; then finishedError else finishedSuccess"></ng-template>
               <ng-template #finishedError>
-                <td class="text-danger"><i class="fa-solid fa-circle-xmark"></i></td>
+                <td class="text-danger text-center"><i class="fa-solid fa-circle-xmark"></i></td>
               </ng-template>
               <ng-template #finishedSuccess>
-                <td class="text-success"><i class="fa-solid fa-circle-check"></i></td>
+                <td class="text-success text-center"><i class="fa-solid fa-circle-check"></i></td>
               </ng-template>
               <td>{{ process.id }}</td>
               <td>{{ process.operation }}</td>
@@ -136,35 +185,4 @@
       </div>
     </div>
   </div>
-</div>
-<div class="position-absolute bottom-0 start-0 rounded-circle m-5">
-  <span class="btn btn-secondary"><i class="fa-solid fa-clock"></i> Contador Global: {{ counterGlobal$() }}</span>
-</div>
-
-<div class="dropup position-absolute bottom-0 end-0 rounded-circle m-5">
-  <button type="button" class="btn btn-success btn-lg rounded-circle  hide-toggle" data-bs-toggle="dropdown"
-    aria-expanded="false" aria-haspopup="true">
-    <i class="fa-solid fa-plus"></i>
-    <span class="d-none">Add Category</span>
-  </button>
-  <ul class="dropdown-menu">
-    <li>
-      <button class="dropdown-item text-danger" (click)="reset()">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        Reiniciar?</button>
-    </li>
-    <li>
-      <button class="dropdown-item" (click)="startProgram()">
-        <i class="fa-solid fa-circle-play"></i>
-        Iniciar Procesamiento</button>
-    </li>
-    <li>
-      <hr class="dropdown-divider">
-    </li>
-    <li>
-      <button class="dropdown-item" (click)="addProcess()">
-        <i class="fa-solid fa-plus"></i>
-        Añadir Procesos nuevos</button>
-    </li>
-  </ul>
 </div>
