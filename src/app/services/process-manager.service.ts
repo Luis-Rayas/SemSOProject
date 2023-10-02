@@ -1,6 +1,8 @@
 import { Injectable, WritableSignal, signal } from '@angular/core';
 import { Process } from '../models/process.model';
 import { ProcessState } from '../models/process.state.model';
+import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
+import { BcpTableComponent } from '../components/main-layout/bcp-table/bcp-table.component';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +12,7 @@ export class ProcessManagerService {
   private canWork !: boolean;
 
   private setIntervalRef !: any;
+  private setCounterIntervalRef !: any;
 
   counterGlobal !: number;
   counterGlobal$ !: WritableSignal<number>;
@@ -33,10 +36,13 @@ export class ProcessManagerService {
 
   idProcess !: number;
 
-  constructor() {
+  constructor(
+    private modalService: NgbModal
+  ) {
     this.canWork = true;
     this.counterGlobal = 0;
     this.setIntervalRef = null;
+    this.setCounterIntervalRef = null;
 
     this.listNewProcess = [];
     this.listReadyProcess = [];
@@ -58,6 +64,8 @@ export class ProcessManagerService {
 
   startProgram(): void {
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+    this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
+
 
     this.setIntervalRef = setInterval(() => {
       this.addProcessToMemory();
@@ -67,12 +75,10 @@ export class ProcessManagerService {
         this.startNextProcess();
       }
       this.reduceBlockTime();
-      this.counterGlobal$.update(() => this.counterGlobal++);
       }, 1000);
-  }
-
-  runProgram(): void {
-
+      this.setCounterIntervalRef = setInterval(() => {
+        this.counterGlobal$.update(() => this.counterGlobal++);
+      }, 1000);
   }
 
   startNextProcess(): void {
@@ -86,6 +92,7 @@ export class ProcessManagerService {
       if (this.listBlockedProcess.length == 0 && this.listNewProcess.length == 0) {
         //Finaliza si y solo si la lsita de bloqueados y nuevos esta vacia
         clearInterval(this.setIntervalRef);
+        clearInterval(this.setCounterIntervalRef);
       }
     }
   }
@@ -160,6 +167,7 @@ export class ProcessManagerService {
       this.canWork = false;
     }
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+    this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
   }
 
   continue(): void {
@@ -176,7 +184,6 @@ export class ProcessManagerService {
         if (process.timeBlocked$() == 0 || process.timeBlocked$() < 0) {
           const process = this.listBlockedProcess.pop();
           if (process) {
-            clearTimeout(process.refTimeBlocked);
             process.state = ProcessState.READY;
             this.listReadyProcess.push(process);
           }
@@ -188,6 +195,20 @@ export class ProcessManagerService {
         }
       });
     }
+  }
+
+  openTableBCP(): void {
+    this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+    this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
+    const ngbModalOptions: NgbModalOptions = {
+      backdrop : 'static',
+      keyboard : false,
+      size : 'xl'
+  };
+    let ngModalRef = this.modalService.open(BcpTableComponent, ngbModalOptions);
+    ngModalRef.result.then((result) => {
+      this.startProgram();
+    })
   }
 
   //VALIDACIONES
@@ -219,6 +240,7 @@ export class ProcessManagerService {
     this.canWork = true;
     this.counterGlobal = 0;
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
+    this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
 
     this.currentRunningProcess = null;
 

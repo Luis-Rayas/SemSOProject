@@ -1,0 +1,47 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Tabla BCP</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="exit()"></button>
+  </div>
+  <div class="modal-body">
+    <h6>Contador Global: {{ counterGlobal$() }}</h6>
+    <div class="table-responsive">
+      <table class="table table-dark table-sm table-striped table-hover rounded">
+        <thead class="text-center align-middle">
+          <tr>
+            <td>ID de Programa</td>
+            <td>Operacion Realizada</td>
+            <td>Datos ingresados</td>
+            <td>Resultado obtenido</td>
+            <td>Tiempo Estimado</td>
+            <td>Tiempo Restante</td>
+            <td>Tiempo de Llegada</td>
+            <td>Tiempo de Finalizacion</td>
+            <td>Tiempo de Retorno</td>
+            <td>Tiempo de Respuesta</td>
+            <td>Tiempo de Espera</td>
+            <td>Tiempo de Servicio</td>
+          </tr>
+        </thead>
+        <tbody class="text-center">
+          <tr *ngFor="let process of listProcesses">
+            <td>{{ process.id }}</td>
+            <td>{{ process.operation }}</td>
+            <td>{{ process.operator1 }} | {{ process.operator2 }}</td>
+            <td>{{ process.result }}</td>
+            <td>{{ process.time }}</td>
+            <td>{{ process.timeRemaining }}</td>
+            <td>{{ process.timeArrived }}</td>
+            <td>{{ process.timeFinished }}</td>
+            <td>{{ process.timeReturned == 0 ? '' : process.timeReturned }}</td>
+            <td>{{ process.timeAnswered }}</td>
+            <td>{{ process.timeInWaiting }}</td>
+            <td>{{ process.timeInService }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+  </div>
+</div>

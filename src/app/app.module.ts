@@ -10,6 +10,7 @@ import { ProcessManagerService } from './services/process-manager.service';
 import { AddProcessesModalComponent } from './components/main-layout/add-processes-modal/add-processes-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ContainerComponent } from './components/main-layout/container.component';
+import { BcpTableComponent } from './components/main-layout/bcp-table/bcp-table.component';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,7 @@ import { ContainerComponent } from './components/main-layout/container.component
     ContainerComponent,
     FooterComponent,
     AddProcessesModalComponent,
+    BcpTableComponent,
   ],
   imports: [
     BrowserModule,

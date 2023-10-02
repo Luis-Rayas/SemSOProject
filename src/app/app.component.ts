@@ -1,6 +1,5 @@
 import { Component, HostListener } from '@angular/core';
 import { ProcessManagerService } from './services/process-manager.service';
-import { ProcessState } from './models/process.state.model';
 import { Process } from './models/process.model';
 
 @Component({
@@ -37,6 +36,10 @@ export class AppComponent {
       case 'n':
         console.log("Nuevo");
         this.addProcess();
+        break;
+      case 'b':
+        console.log("Tabla BCP");
+        this._processManagerService.openTableBCP();
         break;
     }
   }
