@@ -45,8 +45,9 @@ export class BcpTableComponent implements OnInit {
     process.timeArrived; //Tiempo de llegada: Si aun no entra al sistema, no hay mucho que hacer
     if(process.timeArrived != null){
       //Tiempo de espera = (Contador global - Tiempo de llegada) - Tiempo transcurrido
-      process.timeInWaiting == 0 && process.state != ProcessState.RUNNING && process.state != ProcessState.FINISHED ?
+      process.timeInWaiting == 0 && process.state != ProcessState.FINISHED ?
       process.timeInWaiting = (this.counterGlobal$() - process.timeArrived) - process.timeExecution : null;
+      process.timeInWaiting < 0 ? process.timeInWaiting = 0 : null;
       //Tiempo de retorno = Tiempo de espera + Tiempo de servicio
       process.timeReturned == null ?
       process.timeReturned = process.timeInWaiting - process.timeInService : null;

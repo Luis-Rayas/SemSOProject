@@ -130,8 +130,8 @@ export class ProcessManagerService {
       this.finishedProcess(ProcessState.FINISHED);
       return;
     }
+    if(this.currentRunningProcess == process)
     process.timeInService++;
-
   }
 
   interrupt(): void {
@@ -207,6 +207,7 @@ export class ProcessManagerService {
   };
     let ngModalRef = this.modalService.open(BcpTableComponent, ngbModalOptions);
     ngModalRef.result.then((result) => {
+      if(this.canWork)
       this.startProgram();
     })
   }
