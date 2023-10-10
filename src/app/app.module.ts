@@ -11,6 +11,7 @@ import { AddProcessesModalComponent } from './components/main-layout/add-process
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ContainerComponent } from './components/main-layout/container.component';
 import { BcpTableComponent } from './components/main-layout/bcp-table/bcp-table.component';
+import { QuantumModalComponent } from './components/main-layout/quantum-modal/quantum-modal.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +21,7 @@ import { BcpTableComponent } from './components/main-layout/bcp-table/bcp-table.
     FooterComponent,
     AddProcessesModalComponent,
     BcpTableComponent,
+    QuantumModalComponent,
   ],
   imports: [
     BrowserModule,

@@ -4,6 +4,7 @@ import { AddProcessesModalComponent } from './add-processes-modal/add-processes-
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Process } from 'src/app/models/process.model';
 import { ProcessState } from 'src/app/models/process.state.model';
+import { QuantumModalComponent } from './quantum-modal/quantum-modal.component';
 
 @Component({
   selector: 'app-container',
@@ -20,6 +21,7 @@ export class ContainerComponent implements OnInit {
   listBlockedProcess$ !: Signal<Process[]>;
   currentRunningProcess$ !: Signal<Process | undefined | null>;
   listFinishedProcess$ !: Signal<Process[]>;
+  quantum$ !: Signal<number>;
 
   modalRef !: NgbModalRef;
 
@@ -35,14 +37,31 @@ export class ContainerComponent implements OnInit {
     this.listBlockedProcess$ = this.processManagerService.listBlockedProcess$;
     this.currentRunningProcess$ = this.processManagerService.currentRunningProcess$;
     this.listFinishedProcess$ = this.processManagerService.listFinishedProcess$;
+    this.quantum$ = this.processManagerService.quantum$;
   }
 
   startProgram(): void {
-    this.processManagerService.startProgram();
+    if(this.quantum$() != 0) {
+      this.processManagerService.startProgram();
+    } else {
+      this.openSetQuantumModal();
+    }
   }
 
   reset(): void {
     this.processManagerService.reset();
+  }
+
+  openSetQuantumModal(): void {
+    let ngbModalOptions: NgbModalOptions = {
+      backdrop : 'static',
+      keyboard : false
+    };
+    this.modalRef = this.modalService.open(QuantumModalComponent, ngbModalOptions);
+    this.modalRef.result.then((result) => {
+      if(!result || typeof result == undefined) return;
+      this.processManagerService.setQuantum(result);
+    });
   }
 
   addProcess(): void {

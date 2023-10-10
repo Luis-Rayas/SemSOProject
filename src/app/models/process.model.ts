@@ -21,6 +21,9 @@ export class Process {
   timeInWaiting !: number;
   timeInService !: number;
 
+  timeInProcesator !: number;
+  timeInProcesator$ !: WritableSignal<number>;
+
   timeBlocked !: number;
   timeBlocked$ !: WritableSignal<number>;
   refTimeBlocked !: any;
@@ -56,6 +59,7 @@ export class Process {
     this.timeAnswered = null;
     this.timeInWaiting = 0;
     this.timeInService = 0;
+    this.timeInProcesator = 0;
 
     this.timeBlocked = 0;
     this.timeBlocked$ = signal(0);
@@ -65,6 +69,8 @@ export class Process {
 
     this.timeRemaining = time;
     this.timeRemaining$ = signal(this.timeRemaining);
+
+    this.timeInProcesator$ = signal(this.timeInProcesator);
 
     this.signal = signal(this);
     }

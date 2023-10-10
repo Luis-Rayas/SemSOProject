@@ -14,6 +14,9 @@ export class ProcessManagerService {
   private setIntervalRef !: any;
   private setCounterIntervalRef !: any;
 
+  private quantum !: number;
+  quantum$ !: WritableSignal<number>;
+
   counterGlobal !: number;
   counterGlobal$ !: WritableSignal<number>;
 
@@ -44,6 +47,8 @@ export class ProcessManagerService {
     this.setIntervalRef = null;
     this.setCounterIntervalRef = null;
 
+    this.quantum = 0;
+
     this.listNewProcess = [];
     this.listReadyProcess = [];
     this.listBlockedProcess = [];
@@ -59,13 +64,14 @@ export class ProcessManagerService {
 
     this.currentRunningProcess$ = signal(this.currentRunningProcess);
 
+    this.quantum$ = signal(this.quantum);
+
     this.idProcess = 1;
   }
 
   startProgram(): void {
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
     this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
-
 
     this.setIntervalRef = setInterval(() => {
       this.addProcessToMemory();
@@ -75,6 +81,7 @@ export class ProcessManagerService {
         this.startNextProcess();
       }
       this.reduceBlockTime();
+      // this.counterGlobal$.update(() => this.counterGlobal++);
       }, 1000);
       this.setCounterIntervalRef = setInterval(() => {
         this.counterGlobal$.update(() => this.counterGlobal++);
@@ -130,8 +137,19 @@ export class ProcessManagerService {
       this.finishedProcess(ProcessState.FINISHED);
       return;
     }
-    if(this.currentRunningProcess == process)
-    process.timeInService++;
+    if(this.currentRunningProcess == process && process.state == ProcessState.RUNNING) {
+      if((process.timeInProcesator % this.quantum) == 0 && process.timeInProcesator != 0){
+        process.state = ProcessState.READY;
+        this.listReadyProcess.push(process);
+        this.listReadyProcess$.set(this.listReadyProcess);
+        process.timeInProcesator$.update(() => process.timeInProcesator = 0);
+        this.currentRunningProcess$.update(() => this.currentRunningProcess = null);
+        this.startNextProcess();
+      } else {
+        process.timeInProcesator$.update(() => process.timeInProcesator++);
+      }
+      process.timeInService++;
+    }
   }
 
   interrupt(): void {
@@ -144,6 +162,7 @@ export class ProcessManagerService {
       process.timeBlocked$.update(() => process.timeBlocked = 5);
 
       process.state = ProcessState.BLOCKED;
+      process.timeInProcesator$.update(() => process.timeInProcesator = 0);
       this.listBlockedProcess.unshift(process);
       this.listBlockedProcess$.set(this.listBlockedProcess);
 
@@ -197,6 +216,12 @@ export class ProcessManagerService {
     }
   }
 
+
+  setQuantum(quantum: number): void {
+    this.quantum = quantum;
+    this.quantum$.set(this.quantum);
+  }
+
   openTableBCP(): void {
     this.setIntervalRef ? clearInterval(this.setIntervalRef) : null;
     this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
@@ -244,6 +269,9 @@ export class ProcessManagerService {
     this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
 
     this.currentRunningProcess = null;
+
+    this.quantum = 0;
+    this.quantum$.set(this.quantum);
 
     this.idProcess = 1;
     this.listNewProcess = [];
