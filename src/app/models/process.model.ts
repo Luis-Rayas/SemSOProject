@@ -10,6 +10,7 @@ export class Process {
   operator1 !: number;
   operator2 !: number;
   result !: number | string;
+  memory !: number;
 
   //Tiempos
   time !: number;
@@ -45,6 +46,7 @@ export class Process {
     operator1: number,
     operator2: number,
     time: number,
+    memory: number
   ) {
     this.id = id;
     this.state = ProcessState.NEW;
@@ -52,6 +54,7 @@ export class Process {
     this.operator1 = operator1;
     this.operator2 = operator2;
     this.time = time;
+    this.memory = memory;
 
     this.timeArrived = null;
     this.timeFinished = null;
