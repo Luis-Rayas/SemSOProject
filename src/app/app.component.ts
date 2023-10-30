@@ -55,7 +55,8 @@ export class AppComponent {
       array[this.random(0, array.length - 1)],
       this.random(-100, 100), // operador 2
       this.random(-100, 100), //operador 1
-      this.random(6, 16) //Time
+      this.random(6, 16), //Time
+      this.random(6, 26)
       );
     this._processManagerService.addProcess(process);
   }
