@@ -4,6 +4,15 @@
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="exit()"></button>
   </div>
   <div class="modal-body">
+    <div *ngIf="quantum.touched && quantum.invalid"
+    class="alert alert-danger" role="alert">
+      <ul>
+        <li *ngIf="quantum.hasError('required')">El campo es requerido</li>
+        <li *ngIf="quantum.hasError('min')">El numero minimo de Quantum es 1</li>
+        <li *ngIf="quantum.hasError('max')">El numero maximo de Quantum es 16</li>
+        <li *ngIf="quantum.hasError('pattern')">Ingrese solo numeros enteros</li>
+      </ul>
+    </div>
     <div class="input-group mb-3">
       <span class="input-group-text">Valor del Quantum</span>
       <div class="form-floating">
