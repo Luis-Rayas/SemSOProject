@@ -3,6 +3,7 @@ import { Process } from '../models/process.model';
 import { ProcessState } from '../models/process.state.model';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { BcpTableComponent } from '../components/main-layout/bcp-table/bcp-table.component';
+import { MemoryManagerService } from './memory-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -40,7 +41,8 @@ export class ProcessManagerService {
   idProcess !: number;
 
   constructor(
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private memoryManagerService: MemoryManagerService
   ) {
     this.canWork = true;
     this.counterGlobal = 0;
@@ -105,21 +107,28 @@ export class ProcessManagerService {
   }
 
   private addProcessToMemory(): void {
-    let MAX_READY_PROCESSES = undefined; // Define el número máximo de procesos en listReadyProcess
-    this.currentRunningProcess != null ? MAX_READY_PROCESSES = 4 : MAX_READY_PROCESSES = 5;
 
-    if (this.listReadyProcess.length < MAX_READY_PROCESSES) {
-      while ((this.listReadyProcess.length + this.listBlockedProcess.length) < MAX_READY_PROCESSES && this.listNewProcess.length > 0) {
-        let process = this.listNewProcess.shift();
-        if (process) {
-          process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
-          this.listReadyProcess.push(process);
-        }
+    /**
+     * Si el proceso actual cabe en memoria, añadirlo a memoria y pasarlo a listReadyProcess
+     * si no cabe, que se quede en nuevos
+     */
+    if(this.listNewProcess.length == 0) return;
+
+    for(let i = 0; i < this.listNewProcess.length; i++) {
+      let process = this.listNewProcess.shift();
+      if (process === undefined) break;
+
+      if(this.memoryManagerService.checkMemory(process)) {
+        this.memoryManagerService.addProcessToMemory(process);
+        process.timeArrived == null ? process.timeArrived = this.counterGlobal : null;
+        this.listReadyProcess.push(process);
+      } else {
+        this.listNewProcess.unshift(process);
+        break;
       }
-      this.listNewProcess$.set(this.listNewProcess);
-      this.listReadyProcess$.set(this.listReadyProcess);
-      this.counterGlobal$.set(this.counterGlobal);
     }
+    this.listNewProcess$.set(this.listNewProcess);
+    this.listReadyProcess$.set(this.listReadyProcess);
   }
 
 
@@ -269,6 +278,7 @@ export class ProcessManagerService {
     this.setCounterIntervalRef ? clearInterval(this.setCounterIntervalRef) : null;
 
     this.currentRunningProcess = null;
+    this.memoryManagerService.resetMemory()
 
     this.quantum = 0;
     this.quantum$.set(this.quantum);
@@ -317,6 +327,7 @@ export class ProcessManagerService {
 
       state === ProcessState.FINISHED ? process.executeOperation() : process.result = 'ERROR';
 
+      this.memoryManagerService.leaveProcessFromMemory(process);
       this.listFinishedProcess.unshift(process);
       this.listFinishedProcess$.set(this.listFinishedProcess);
       this.currentRunningProcess = null;

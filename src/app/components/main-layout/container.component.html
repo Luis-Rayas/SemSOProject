@@ -38,15 +38,14 @@
 
 <div class="row m-1 mt-5">
   <!-- memoria -->
-  <div class="col-3">
+  <div class="col-4">
     <div class="card">
       <div class="card-header">
         <span>Valor actual del Quantum: {{quantum$()}} <i class="fa-solid fa-bolt"></i>
         </span>
       </div>
-      <hr />
       <div class="card-header text-center">
-        <span class="fw-bold">Memoria</span>
+        <span class="fw-bold"><i class="fa-solid fa-database"></i> Memoria</span>
       </div>
       <div class="card-body">
         <app-memory-table></app-memory-table>
@@ -54,7 +53,7 @@
     </div>
   </div>
 
-  <div class="col-9">
+  <div class="col-8">
     <div class="row mb-1">
       <div class="col">
         <div class="card">
@@ -90,6 +89,7 @@
                 <thead class="align-middle table-dark">
                   <tr>
                     <th>ID de Programa</th>
+                    <th>Memoria</th>
                     <th>Tiempo Maximo Estimado</th>
                     <th>Tiempo Ejecutado</th>
                   </tr>
@@ -97,6 +97,7 @@
                 <tbody>
                   <tr *ngFor="let process of listReadyProcess$()">
                     <td>{{ process.id }}</td>
+                    <td>{{ process.memory }}</td>
                     <td>{{ process.time }}</td>
                     <td>{{ process.timeExecution$() }}</td>
                   </tr>
@@ -139,7 +140,7 @@
               <thead class="align-middle">
                 <tr>
                   <td>ID de Programa</td>
-                  <!-- <td>Nombre del Programador</td> -->
+                  <td>Memoria Usada</td>
                   <td>Operacion a Realizar</td>
                   <td>Tpo. Max. Estimado</td>
                   <td>Tpo. ejecucion</td>
@@ -150,6 +151,7 @@
               <tbody>
                 <tr *ngIf="currentRunningProcess$() !== null && currentRunningProcess$() !== undefined">
                   <td>{{ currentRunningProcess$()?.id }}</td>
+                  <td>{{ currentRunningProcess$()?.memory }}</td>
                   <td>{{ currentRunningProcess$()?.operator1 }} {{ currentRunningProcess$()?.operation }} {{
                     currentRunningProcess$()?.operator2 }}</td>
                   <td>{{ currentRunningProcess$()?.time }}</td>

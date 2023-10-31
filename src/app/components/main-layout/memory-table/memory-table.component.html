@@ -2,53 +2,61 @@
   <thead class="align-middle table-dark">
     <tr>
       <th># Marco</th>
+      <th># Proc.</th>
       <th>Memoria Usada</th>
       <th># Marco</th>
+      <th># Proc.</th>
       <th>Memoria Usada</th>
     </tr>
   </thead>
   <tbody>
     <ng-container *ngFor="let frame of frames$(); let i = index">
       <tr *ngIf="i % 2 == 0">
-        <td>{{i}}</td>
+        <th>{{i}}</th>
+        <td>{{ frame.idProcessUsed }} </td>
         <td>
-          <ngb-progressbar [value]="frame.idProcessUsed ? frame.memoryUsed : 0" [striped]="true" [animated]="true" [max]="4">
-            <span *ngIf="frame.idProcessUsed !== null && frame.idProcessUsed !== undefined" class="fw-bold">{{ frame.idProcessUsed }} {{ frame.memoryUsed}} </span>
+          <ngb-progressbar [value]="frame.idProcessUsed ? frame.memoryUsed : 0" [striped]="true" [animated]="true" [max]="4" [type]="frame.color">
+            <span *ngIf="frame.idProcessUsed !== null && frame.idProcessUsed !== undefined" class="fw-bold">{{ frame.memoryUsed}}/5 </span>
           </ngb-progressbar>
         </td>
-        <td>{{i + 1}}</td>
+        <th>{{i + 1}}</th>
+        <td>{{ frames$()[i +1].idProcessUsed }}</td>
         <td>
-          <ngb-progressbar [value]="frame.idProcessUsed ? frame.memoryUsed : 0" [striped]="true" [animated]="true" [max]="5">
-            <span *ngIf="frame.idProcessUsed !== null && frame.idProcessUsed !== undefined" class="fw-bold">{{ frame.idProcessUsed }} {{ frame.memoryUsed}} </span>
+          <ngb-progressbar [value]="frames$()[i +1].idProcessUsed ? frames$()[i +1].memoryUsed : 0" [striped]="true" [animated]="true" [max]="5" [type]="frames$()[i +1].color">
+            <span *ngIf="frames$()[i +1].idProcessUsed !== null && frames$()[i +1].idProcessUsed !== undefined" class="fw-bold">{{ frames$()[i +1].memoryUsed}}/5 </span>
           </ngb-progressbar>
         </td>
       </tr>
     </ng-container>
     <tr>
       <td>40</td>
+      <td>SO</td>
       <td>
-        <ngb-progressbar type="dark" [value]="5" [striped]="true" [animated]="false" [max]="5">
-          SO 5/5
+        <ngb-progressbar type="dark" [value]="5" [striped]="false" [animated]="false" [max]="5">
+          5/5
         </ngb-progressbar>
       </td>
       <td>41</td>
+      <td>SO</td>
       <td>
-        <ngb-progressbar type="dark" [value]="5" [striped]="true" [animated]="false" [max]="5">
-          SO 5/5
+        <ngb-progressbar type="dark" [value]="5" [striped]="false" [animated]="false" [max]="5">
+          5/5
         </ngb-progressbar>
       </td>
     </tr>
     <tr>
       <td>42</td>
+      <td>SO</td>
       <td>
-        <ngb-progressbar type="dark" [value]="5" [striped]="true" [animated]="false" [max]="5">
-          SO 5/5
+        <ngb-progressbar type="dark" [value]="5" [striped]="false" [animated]="false" [max]="5">
+          5/5
         </ngb-progressbar>
       </td>
       <td>43</td>
+      <td>SO</td>
       <td>
-        <ngb-progressbar type="dark" [value]="5" [striped]="true" [animated]="false" [max]="5">
-          SO 5/5
+        <ngb-progressbar type="dark" [value]="5" [striped]="false" [animated]="false" [max]="5">
+          5/5
         </ngb-progressbar>
       </td>
     </tr>
