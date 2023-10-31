@@ -12,7 +12,7 @@ export class AddProcessesModalComponent {
   constructor(public activeModal: NgbActiveModal) { }
 
   public ngOnInit(): void {
-    this.numberProcess = new FormControl('', [Validators.required, Validators.min(1), Validators.max(20), Validators.pattern('^[0-9]*$')]);
+    this.numberProcess = new FormControl('', [Validators.required, Validators.min(1), Validators.max(50), Validators.pattern('^[0-9]*$')]);
   }
 
   exit() {

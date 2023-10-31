@@ -26,6 +26,7 @@ export class AppComponent {
         }, 600);
         break;
       case 'p':
+      case 't':
         console.log("Pausa");
         this._processManagerService.pause();
         break;

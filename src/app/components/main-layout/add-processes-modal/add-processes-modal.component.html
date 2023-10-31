@@ -9,7 +9,7 @@
       <ul>
         <li *ngIf="numberProcess.hasError('required')">El campo es requerido</li>
         <li *ngIf="numberProcess.hasError('min')">El numero minimo de procesos es 1</li>
-        <li *ngIf="numberProcess.hasError('max')">El numero maximo de procesos es 20</li>
+        <li *ngIf="numberProcess.hasError('max')">El numero maximo de procesos es 50</li>
         <li *ngIf="numberProcess.hasError('pattern')">Ingrese solo numeros enteros</li>
       </ul>
     </div>
